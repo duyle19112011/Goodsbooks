@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Trao Tay — Chợ đồ cũ & sang nhượng</title>
+  <title>Trao Tay — Mua bán, cho tặng & trao đổi đồ cũ</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #f4f6f9;
-      --card: #ffffff;
-      --text: #111827;
-      --muted: #6b7280;
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --danger: #dc2626;
-      --success: #059669;
-      --border: #e5e7eb;
+      --bg: #0b1020;
+      --panel: #131b2e;
+      --panel-2: #1a243d;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: rgba(148, 163, 184, 0.18);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --success: #10b981;
+      --danger: #ef4444;
     }
     * { box-sizing: border-box; }
     body {
@@ -25,648 +26,662 @@
       color: var(--text);
       line-height: 1.5;
     }
+    .container { max-width: 1040px; margin: 0 auto; padding: 16px; }
     header {
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      padding: 12px 16px;
-      position: sticky;
-      top: 0;
-      z-index: 20;
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 14px 0 20px; border-bottom: 1px solid var(--border);
     }
-    .header-inner {
-      max-width: 1040px;
-      margin: 0 auto;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; }
+    .nav-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .badge-user {
+      padding: 6px 10px; border-radius: 999px; background: var(--panel-2);
+      border: 1px solid var(--border); font-size: 13px; color: #cbd5e1;
     }
-    .brand {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--primary);
-      text-decoration: none;
+    button, select, input, textarea {
+      font: inherit; color: var(--text); background: var(--panel-2);
+      border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px;
     }
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .container {
-      max-width: 1040px;
-      margin: 18px auto;
-      padding: 0 16px 48px;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 1px 2px rgba(0,0,0,.04);
-    }
-    .btn {
-      border: 1px solid var(--border);
-      background: #fff;
-      color: var(--text);
-      padding: 8px 13px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn:hover { background: #f9fafb; }
-    .btn:disabled { opacity: .6; cursor: not-allowed; }
-    .btn-primary {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: #fff;
-    }
+    button { cursor: pointer; font-weight: 600; transition: 0.15s ease; }
+    button:hover { filter: brightness(1.08); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); border-color: transparent; }
     .btn-primary:hover { background: var(--primary-hover); }
-    .btn-danger {
-      background: #fef2f2;
-      border-color: #fecaca;
-      color: var(--danger);
-    }
-    .btn-success {
-      background: #ecfdf5;
-      border-color: #a7f3d0;
-      color: var(--success);
-    }
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      background: #eff6ff;
-      color: var(--primary);
-    }
-    .badge-admin {
-      background: #fef3c7;
-      color: #92400e;
-    }
-    .badge-sold {
-      background: #fee2e2;
-      color: #991b1b;
-    }
+    .btn-ghost { background: transparent; }
+    .btn-success { background: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.4); color: #6ee7b7; }
+    .btn-danger { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+    .hero { padding: 24px 0 14px; }
+    .hero h1 { margin: 0 0 6px; font-size: clamp(24px, 4vw, 34px); }
+    .hero p { margin: 0; color: var(--muted); }
     .toolbar {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      margin-bottom: 16px;
+      display: grid; grid-template-columns: 1fr auto; gap: 10px; margin: 18px 0 20px;
     }
-    @media (max-width: 640px) {
-      .toolbar { grid-template-columns: 1fr; }
+    @media (max-width: 600px) { .toolbar { grid-template-columns: 1fr; } }
+    .staff-panel {
+      display: none; margin-bottom: 20px; padding: 14px; border-radius: 14px;
+      background: var(--panel); border: 1px solid var(--border);
     }
-    input, select, textarea {
-      width: 100%;
-      padding: 9px 11px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: inherit;
-      background: #fff;
-      color: var(--text);
-    }
-    textarea { min-height: 76px; resize: vertical; }
-    .field { margin-bottom: 11px; }
-    .field label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 4px;
+    .staff-panel.show { display: block; }
+    .user-row {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 8px; padding: 10px 12px; border-radius: 10px;
+      background: var(--panel-2); border: 1px solid var(--border);
     }
     .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-      gap: 14px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
     }
-    .item-img {
-      width: 100%;
-      height: 185px;
-      object-fit: cover;
-      border-radius: 9px;
-      background: #e5e7eb;
-      margin-bottom: 10px;
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+      overflow: hidden; display: flex; flex-direction: column;
     }
-    .price {
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--primary);
-      margin: 4px 0;
+    .card.sold { opacity: 0.68; }
+    .thumb {
+      width: 100%; height: 180px; object-fit: cover; background: var(--panel-2);
+      display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px;
     }
-    .meta {
-      font-size: 12.5px;
-      color: var(--muted);
+    .card-body { padding: 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .price { font-size: 17px; font-weight: 700; color: #34d399; }
+    .price.free { color: #93c5fd; }
+    .title { font-size: 16px; font-weight: 700; margin: 0; }
+    .meta { font-size: 13px; color: var(--muted); }
+    .status-pill {
+      display: inline-block; width: fit-content; font-size: 12px; padding: 2px 8px;
+      border-radius: 999px; background: rgba(245, 158, 11, 0.18); color: #fcd34d;
     }
-    .item-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      flex-wrap: wrap;
+    .card-actions {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .empty {
+      text-align: center; padding: 42px 16px; color: var(--muted);
+      background: var(--panel); border: 1px dashed var(--border); border-radius: 14px;
     }
     .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(17,24,39,.55);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      z-index: 50;
+      position: fixed; inset: 0; background: rgba(2, 6, 23, 0.78);
+      display: none; align-items: center; justify-content: center; padding: 14px; z-index: 50;
     }
     .modal-backdrop.open { display: flex; }
     .modal {
-      width: 100%;
-      max-width: 440px;
-      background: #fff;
-      border-radius: 14px;
-      padding: 20px;
-      max-height: 92vh;
-      overflow-y: auto;
+      width: 100%; max-width: 460px; max-height: 92vh; overflow-y: auto;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
     }
-    .modal-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .tabs {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-    .tab-btn {
-      flex: 1;
-      padding: 8px;
-      border: 1px solid var(--border);
-      background: #f9fafb;
-      border-radius: 8px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .tab-btn.active {
-      background: var(--primary);
-      color: #fff;
-      border-color: var(--primary);
-    }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .modal-head h2 { margin: 0; font-size: 18px; }
+    .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .field label { font-size: 13px; color: #cbd5e1; font-weight: 600; }
     .err-box {
-      color: var(--danger);
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 13px;
-      margin-bottom: 10px;
-      display: none;
+      display: none; margin-bottom: 12px; padding: 10px 12px; border-radius: 10px;
+      background: rgba(239, 68, 68, 0.16); border: 1px solid rgba(239, 68, 68, 0.45);
+      color: #fecaca; font-size: 13px;
     }
+    .err-box.show { display: block; }
+    .link-btn {
+      background: none; border: none; color: #93c5fd; text-decoration: underline;
+      padding: 0; font-weight: 500;
+    }
+    .forgot-box {
+      display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+    }
+    .forgot-box.show { display: block; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="header-inner">
-      <a class="brand" href="#">Trao Tay</a>
+  <div class="container">
+    <header>
+      <div class="brand">🤝 <span>Trao Tay</span></div>
       <div class="nav-actions" id="navActions">
-        <button class="btn btn-primary" id="btnOpenPost">+ Đăng tin</button>
-        <button class="btn" id="btnOpenAuth">Đăng nhập / Đăng ký</button>
+        <button type="button" id="btnOpenLogin" class="btn-ghost">Đăng nhập</button>
+        <button type="button" id="btnOpenRegister" class="btn-primary">Đăng ký</button>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <main class="container">
-    <div class="card toolbar">
-      <input id="searchInput" type="search" placeholder="Tìm theo tên món đồ, danh mục, người bán..." />
-      <select id="categoryFilter">
-        <option value="">Tất cả danh mục</option>
-        <option value="Điện tử - Linh kiện">Điện tử - Linh kiện</option>
-        <option value="Sách - Học tập">Sách - Học tập</option>
-        <option value="Gia dụng - Đời sống">Gia dụng - Đời sống</option>
-        <option value="Khác">Khác</option>
+    <section class="hero">
+      <h1>Mua bán, cho tặng và trao đổi đồ cũ.</h1>
+      <p>Đăng món đồ bạn muốn bán, cho đi hoặc đổi</p>
+    </section>
+
+    <div class="toolbar">
+      <input id="searchInput" type="search" placeholder="Tìm theo tên vật phẩm, người bán, địa chỉ..." />
+      <select id="filterStatus">
+        <option value="all">Tất cả tin</option>
+        <option value="available">Còn hàng / Tặng</option>
+        <option value="sold">Đã bán / Đã giao</option>
       </select>
     </div>
 
-    <div class="grid" id="itemsGrid">
-      <div class="card meta">Đang tải danh sách tin đăng...</div>
-    </div>
-  </main>
+    <section id="staffPanel" class="staff-panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
+        <strong>🛡️ Quản lý quyền Phó Admin</strong>
+        <button type="button" id="btnRefreshUsers" class="btn-ghost" style="padding:6px 10px; font-size:13px;">Tải lại</button>
+      </div>
+      <div id="usersRoleList" style="display:grid; gap:8px;"></div>
+    </section>
+
+    <main id="itemsList" class="grid"></main>
+  </div>
 
   <!-- Modal Đăng nhập / Đăng ký / Quên mật khẩu -->
-  <div class="modal-backdrop" id="authModal">
+  <div id="authModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal">
       <div class="modal-head">
-        <strong>Tài khoản Trao Tay</strong>
-        <button class="btn" id="btnCloseAuth" type="button">✕</button>
+        <h2 id="authTitle">Đăng nhập</h2>
+        <button type="button" id="btnCloseAuth" class="btn-ghost">✕</button>
       </div>
 
-      <div class="tabs">
-        <button class="tab-btn active" id="tabLogin" type="button">Đăng nhập</button>
-        <button class="tab-btn" id="tabRegister" type="button">Đăng ký</button>
-      </div>
-
-      <div class="err-box" id="authErr"></div>
+      <div id="authErr" class="err-box"></div>
 
       <form id="authForm">
         <div id="registerFields" style="display:none;">
           <div class="field">
-            <label for="aName">Tên hiển thị</label>
-            <input id="aName" type="text" maxlength="30" placeholder="Ví dụ: Nguyễn Văn A" />
+            <label for="regName">Tên hiển thị (không trùng)</label>
+            <input id="regName" type="text" placeholder="Ví dụ: DuyLe" />
           </div>
           <div class="field">
-            <label for="aPhone">Số điện thoại</label>
-            <input id="aPhone" type="tel" maxlength="20" placeholder="Ví dụ: 0912345678" />
+            <label for="regPhone">Số điện thoại (không trùng)</label>
+            <input id="regPhone" type="tel" placeholder="Ví dụ: 0967552130" />
           </div>
         </div>
 
         <div class="field">
-          <label for="aEmail">Gmail</label>
-          <input id="aEmail" type="email" required placeholder="tenban@gmail.com" />
+          <label for="authEmail">Email (Gmail)</label>
+          <input id="authEmail" type="email" required placeholder="name@gmail.com" />
         </div>
 
         <div class="field">
-          <label for="aPassword">Mật khẩu (tối thiểu 8 ký tự)</label>
-          <input id="aPassword" type="password" required minlength="8" placeholder="••••••••" />
+          <label for="authPass">Mật khẩu (tối thiểu 8 ký tự)</label>
+          <input id="authPass" type="password" required minlength="8" placeholder="••••••••" />
         </div>
 
-        <button class="btn btn-primary" id="btnSubmitAuth" type="submit" style="width:100%;">
-          Đăng nhập
-        </button>
+        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:6px;">
+          <button type="button" id="btnCancelAuth" class="btn-ghost">Hủy</button>
+          <button type="submit" id="btnSubmitAuth" class="btn-primary">Đăng nhập</button>
+        </div>
       </form>
 
-      <button type="button" id="btnOpenForgot"
-              style="background:none; border:none; color:#2563eb; text-decoration:underline; cursor:pointer; padding:0; margin-top:10px; font-size:13px;">
-        Quên mật khẩu?
-      </button>
+      <div style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:13px;">
+        <span id="toggleAuthText" style="color:var(--muted);">
+          Chưa có tài khoản? <button type="button" id="btnSwitchModeInner" class="link-btn">Đăng ký</button>
+        </span>
+        <button type="button" id="btnOpenForgot" class="link-btn">Quên mật khẩu?</button>
+      </div>
 
-      <div id="forgotWrap" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid #e5e7eb;">
-        <div style="font-size:13px; font-weight:700; margin-bottom:6px;">Khôi phục mật khẩu qua Gmail</div>
-        <input id="fpEmail" type="email" placeholder="Nhập Gmail đã đăng ký..." style="margin-bottom:8px;" />
-        <div style="display:flex; gap:8px;">
-          <button id="btnSendReset" type="button" class="btn btn-primary">Gửi link đặt lại</button>
-          <button id="btnCancelReset" type="button" class="btn">Hủy</button>
+      <div id="forgotBox" class="forgot-box">
+        <div class="field" style="margin-bottom:8px;">
+          <label for="fpEmail">Khôi phục mật khẩu qua Gmail</label>
+          <input id="fpEmail" type="email" placeholder="Nhập Gmail đã đăng ký..." />
         </div>
+        <button type="button" id="btnSendReset" class="btn-primary" style="width:100%;">Gửi link đặt lại mật khẩu</button>
       </div>
     </div>
   </div>
 
-  <!-- Modal Đăng tin mới -->
-  <div class="modal-backdrop" id="postModal">
+  <!-- Modal Đăng tin 6 trường -->
+  <div id="postModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal">
       <div class="modal-head">
-        <strong>Đăng tin Trao Tay</strong>
-        <button class="btn" id="btnClosePost" type="button">✕</button>
+        <h2>Đăng tin Trao Tay</h2>
+        <button type="button" id="btnClosePost" class="btn-ghost">✕</button>
       </div>
 
-      <div class="err-box" id="postErr"></div>
+      <div id="postErr" class="err-box"></div>
 
       <form id="postForm">
         <div class="field">
-          <label for="pTitle">Tên món đồ</label>
-          <input id="pTitle" type="text" required maxlength="100" placeholder="Ví dụ: Mạch STM32F103C8T6" />
+          <label for="pSellerName">Tên người bán</label>
+          <input id="pSellerName" type="text" required placeholder="Nhập tên người bán" />
         </div>
         <div class="field">
-          <label for="pCategory">Danh mục</label>
-          <select id="pCategory">
-            <option value="Điện tử - Linh kiện">Điện tử - Linh kiện</option>
-            <option value="Sách - Học tập">Sách - Học tập</option>
-            <option value="Gia dụng - Đời sống">Gia dụng - Đời sống</option>
-            <option value="Khác">Khác</option>
-          </select>
+          <label for="pTitle">Tên vật phẩm</label>
+          <input id="pTitle" type="text" required placeholder="Ví dụ: Bản vẽ kĩ thuật" />
         </div>
         <div class="field">
-          <label for="pPrice">Giá (VNĐ — nhập 0 nếu tặng)</label>
+          <label for="pCondition">Tình trạng vật phẩm</label>
+          <input id="pCondition" type="text" required placeholder="Ví dụ: Mới 95%, cũ, còn dùng tốt..." />
+        </div>
+        <div class="field">
+          <label for="pAddress">Địa chỉ</label>
+          <input id="pAddress" type="text" required placeholder="Ví dụ: Phước Hòa, Phú Giáo..." />
+        </div>
+        <div class="field">
+          <label for="pPhone">Số điện thoại</label>
+          <input id="pPhone" type="tel" required placeholder="Ví dụ: 0967552130" />
+        </div>
+        <div class="field">
+          <label for="pPrice">Giá bán (VNĐ — nhập 0 nếu tặng)</label>
           <input id="pPrice" type="number" min="0" step="1000" value="0" required />
-        </div>
-        <div class="field">
-          <label for="pDesc">Mô tả tình trạng</label>
-          <textarea id="pDesc" maxlength="600" placeholder="Tình trạng hoạt động, phụ kiện kèm theo, khu vực giao dịch..."></textarea>
         </div>
         <div class="field">
           <label for="pImage">Ảnh món đồ (tùy chọn, tự nén JPG)</label>
           <input id="pImage" type="file" accept="image/*" />
         </div>
-        <button class="btn btn-primary" id="btnSubmitPost" type="submit" style="width:100%;">
-          Đăng tin
-        </button>
+
+        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+          <button type="button" id="btnCancelPost" class="btn-ghost">Hủy</button>
+          <button type="submit" id="btnSubmitPost" class="btn-primary">Đăng tin</button>
+        </div>
       </form>
     </div>
   </div>
 
   <script>
     const SUPABASE_URL = "https://enazqmppsnazycsrvutd.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_QjN1z2ZHccsBbrgnWINklg_nca4uWGU";
-  </script>
-  <script>
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_KEY = "sb_publishable_QjN1z2ZHccsBbrgnWINklg_nca4uWGU";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentUser = null;
     let currentProfile = null;
-    let profilesMap = new Map();
+    let isRegisterMode = false;
     let allItems = [];
-    let authMode = "login";
 
-    const viMsg = m => {
-      m = String(m || "");
-      if (/already registered/i.test(m)) return "Email này đã được đăng ký.";
-      if (/DUP_NAME|tt_profiles_name_unique/i.test(m)) return "Tên hiển thị này đã có người sử dụng.";
-      if (/DUP_PHONE|tt_profiles_phone_unique/i.test(m)) return "Số điện thoại này đã được đăng ký cho tài khoản khác.";
-      if (/invalid login/i.test(m)) return "Sai email hoặc mật khẩu.";
-      if (/not confirmed/i.test(m)) return "Email chưa được xác nhận. Hãy kiểm tra hộp thư.";
-      if (/rate limit|too many/i.test(m)) return "Thao tác quá nhanh, hãy thử lại sau ít phút.";
-      if (/password/i.test(m)) return "Mật khẩu không đạt yêu cầu (tối thiểu 8 ký tự).";
-      return m;
+    const navActions = document.getElementById("navActions");
+    const itemsList = document.getElementById("itemsList");
+    const searchInput = document.getElementById("searchInput");
+    const filterStatus = document.getElementById("filterStatus");
+    const staffPanel = document.getElementById("staffPanel");
+    const usersRoleList = document.getElementById("usersRoleList");
+
+    const authModal = document.getElementById("authModal");
+    const authTitle = document.getElementById("authTitle");
+    const authErr = document.getElementById("authErr");
+    const authForm = document.getElementById("authForm");
+    const registerFields = document.getElementById("registerFields");
+    const btnSubmitAuth = document.getElementById("btnSubmitAuth");
+    const toggleAuthText = document.getElementById("toggleAuthText");
+    const btnOpenForgot = document.getElementById("btnOpenForgot");
+    const forgotBox = document.getElementById("forgotBox");
+    const fpEmail = document.getElementById("fpEmail");
+    const btnSendReset = document.getElementById("btnSendReset");
+
+    const postModal = document.getElementById("postModal");
+    const postErr = document.getElementById("postErr");
+    const postForm = document.getElementById("postForm");
+    const btnSubmitPost = document.getElementById("btnSubmitPost");
+
+    function escapeHtml(str = "") {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function formatPrice(val) {
+      const n = Number(val || 0);
+      if (n <= 0) return { text: "Tặng miễn phí (0 đ)", free: true };
+      return { text: n.toLocaleString("vi-VN") + " đ", free: false };
+    }
+
+    function isMainAdmin(profile) {
+      return profile?.role === "admin" || profile?.["vai trò"] === "quản trị viên";
+    }
+
+    function isSubAdmin(profile) {
+      return profile?.role === "sub_admin" || profile?.["vai trò"] === "phó quản trị viên";
+    }
+
+    function isStaff(profile) {
+      return isMainAdmin(profile) || isSubAdmin(profile);
+    }
+
+    function getRoleBadge(profile) {
+      if (isMainAdmin(profile)) return "Admin";
+      if (isSubAdmin(profile)) return "Phó Admin";
+      return "";
+    }
+
+    function showBox(el, msg) {
+      el.textContent = msg;
+      el.classList.add("show");
+    }
+
+    function hideBox(el) {
+      el.textContent = "";
+      el.classList.remove("show");
+    }
+
+    function bindSwitchAuthButton() {
+      const btn = document.getElementById("btnSwitchModeInner");
+      if (btn) btn.onclick = () => openAuthModal(!isRegisterMode);
+    }
+
+    function openAuthModal(register = false) {
+      isRegisterMode = register;
+      hideBox(authErr);
+      forgotBox.classList.remove("show");
+      registerFields.style.display = register ? "block" : "none";
+      authTitle.textContent = register ? "Đăng ký tài khoản" : "Đăng nhập";
+      btnSubmitAuth.textContent = register ? "Đăng ký" : "Đăng nhập";
+      toggleAuthText.innerHTML = register
+        ? 'Đã có tài khoản? <button type="button" id="btnSwitchModeInner" class="link-btn">Đăng nhập</button>'
+        : 'Chưa có tài khoản? <button type="button" id="btnSwitchModeInner" class="link-btn">Đăng ký</button>';
+      bindSwitchAuthButton();
+      authModal.classList.add("open");
+    }
+
+    function closeAuthModal() {
+      authModal.classList.remove("open");
+    }
+
+    function openPostModal() {
+      if (!currentUser) return openAuthModal(false);
+      hideBox(postErr);
+      postForm.reset();
+      document.getElementById("pPrice").value = "0";
+      if (currentProfile) {
+        document.getElementById("pSellerName").value = currentProfile.name || currentProfile["tên"] || "";
+        document.getElementById("pPhone").value = currentProfile.phone || currentProfile["điện thoại"] || "";
+      }
+      postModal.classList.add("open");
+    }
+
+    function closePostModal() {
+      postModal.classList.remove("open");
+    }
+
+    document.getElementById("btnCloseAuth").onclick = closeAuthModal;
+    document.getElementById("btnCancelAuth").onclick = closeAuthModal;
+    document.getElementById("btnClosePost").onclick = closePostModal;
+    document.getElementById("btnCancelPost").onclick = closePostModal;
+    bindSwitchAuthButton();
+
+    btnOpenForgot.onclick = () => {
+      forgotBox.classList.toggle("show");
+      const currentEmail = document.getElementById("authEmail").value.trim();
+      if (currentEmail && !fpEmail.value) fpEmail.value = currentEmail;
+      fpEmail.focus();
     };
 
-    const escapeHtml = s => String(s || "").replace(/[&<>"']/g, c => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-    }[c]));
-
-    const formatPrice = n => Number(n || 0) === 0
-      ? "Tặng miễn phí"
-      : Number(n).toLocaleString("vi-VN") + " đ";
-
-    function showErr(el, msg) {
-      el.textContent = msg;
-      el.style.display = "block";
-    }
-    function clearErr(el) {
-      el.textContent = "";
-      el.style.display = "none";
-    }
-
-    function renderHeader() {
-      const nav = document.getElementById("navActions");
-      if (!currentUser) {
-        nav.innerHTML = `
-          <button class="btn btn-primary" id="btnOpenPost">+ Đăng tin</button>
-          <button class="btn" id="btnOpenAuth">Đăng nhập / Đăng ký</button>
-        `;
-      } else {
-        const name = escapeHtml(currentProfile?.name || currentUser.email);
-        const isAdmin = currentProfile?.role === "admin";
-        nav.innerHTML = `
-          <span class="badge ${isAdmin ? "badge-admin" : ""}">${name}${isAdmin ? " • Admin" : ""}</span>
-          <button class="btn btn-primary" id="btnOpenPost">+ Đăng tin</button>
-          <button class="btn" id="btnLogout">Đăng xuất</button>
-        `;
-        document.getElementById("btnLogout")?.addEventListener("click", async () => {
-          await sb.auth.signOut();
-        });
-      }
-      document.getElementById("btnOpenPost")?.addEventListener("click", openPostModal);
-      document.getElementById("btnOpenAuth")?.addEventListener("click", () => openAuthModal("login"));
-    }
-
-    async function loadSessionAndProfile() {
-      const { data } = await sb.auth.getSession();
-      currentUser = data.session?.user || null;
-      currentProfile = null;
-      if (currentUser) {
-        const { data: prof } = await sb
-          .from("tt_profiles")
-          .select("*")
-          .eq("id", currentUser.id)
-          .maybeSingle();
-        currentProfile = prof || null;
-      }
-      renderHeader();
-    }
-
-    async function loadData() {
-      const [{ data: profs }, { data: items, error }] = await Promise.all([
-        sb.from("tt_profiles").select("id, name, phone, role"),
-        sb.from("tt_items").select("*").order("created_at", { ascending: false })
-      ]);
-
-      profilesMap = new Map((profs || []).map(p => [p.id, p]));
-      if (error) {
-        document.getElementById("itemsGrid").innerHTML =
-          `<div class="card meta">Không tải được tin đăng: ${escapeHtml(error.message)}</div>`;
-        return;
-      }
-      allItems = items || [];
-      renderItems();
-    }
-
-    function renderItems() {
-      const q = document.getElementById("searchInput").value.trim().toLowerCase();
-      const cat = document.getElementById("categoryFilter").value;
-      const grid = document.getElementById("itemsGrid");
-
-      const filtered = allItems.filter(it => {
-        if (cat && it.category !== cat) return false;
-        if (!q) return true;
-        const seller = profilesMap.get(it.user_id);
-        const hay = `${it.title} ${it.category} ${it.description} ${seller?.name || ""}`.toLowerCase();
-        return hay.includes(q);
+    btnSendReset.onclick = async () => {
+      hideBox(authErr);
+      const email = fpEmail.value.trim().toLowerCase();
+      if (!email) return showBox(authErr, "Vui lòng nhập Gmail đã đăng ký để nhận link đặt lại mật khẩu.");
+      btnSendReset.disabled = true;
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: "https://duyle19112011.github.io/Goodsbooks/"
       });
+      btnSendReset.disabled = false;
+      if (error) return showBox(authErr, "Lỗi gửi mail: " + error.message);
+      alert("Đã gửi link đặt lại mật khẩu tới " + email + ". Hãy kiểm tra hộp thư (cả mục Spam).");
+    };
 
-      if (!filtered.length) {
-        grid.innerHTML = `<div class="card meta">Chưa có tin đăng nào phù hợp.</div>`;
-        return;
+    authForm.onsubmit = async (e) => {
+      e.preventDefault();
+      hideBox(authErr);
+      const email = document.getElementById("authEmail").value.trim().toLowerCase();
+      const password = document.getElementById("authPass").value;
+      btnSubmitAuth.disabled = true;
+
+      if (isRegisterMode) {
+        const displayName = document.getElementById("regName").value.trim();
+        const phone = document.getElementById("regPhone").value.trim();
+        if (!displayName || !phone) {
+          btnSubmitAuth.disabled = false;
+          return showBox(authErr, "Vui lòng nhập đầy đủ Tên hiển thị và Số điện thoại.");
+        }
+        const { error } = await sb.auth.signUp({
+          email,
+          password,
+          options: { data: { name: displayName, phone } }
+        });
+        btnSubmitAuth.disabled = false;
+        if (error) return showBox(authErr, error.message);
+        alert("Đăng ký thành công! Hãy kiểm tra email (nếu bật xác nhận) rồi đăng nhập.");
+        openAuthModal(false);
+      } else {
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+        btnSubmitAuth.disabled = false;
+        if (error) return showBox(authErr, "Sai email hoặc mật khẩu.");
+        closeAuthModal();
       }
+    };
 
-      const isAdmin = currentProfile?.role === "admin";
-      grid.innerHTML = filtered.map(it => {
-        const seller = profilesMap.get(it.user_id) || {};
-        const canManage = currentUser && (currentUser.id === it.user_id || isAdmin);
-        const imgHtml = it.image_url
-          ? `<img class="item-img" src="${escapeHtml(it.image_url)}" alt="${escapeHtml(it.title)}" loading="lazy" />`
-          : `<div class="item-img" style="display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:13px;">Không có ảnh</div>`;
-
-        return `
-          <article class="card">
-            ${imgHtml}
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
-              <span class="badge">${escapeHtml(it.category)}</span>
-              ${it.status === "sold" ? `<span class="badge badge-sold">Đã giao</span>` : ""}
-            </div>
-            <h3 style="margin:8px 0 2px;font-size:16px;">${escapeHtml(it.title)}</h3>
-            <div class="price">${formatPrice(it.price)}</div>
-            <p style="margin:6px 0 10px;font-size:13.5px;color:#374151;">${escapeHtml(it.description)}</p>
-            <div class="meta">Người đăng: <strong>${escapeHtml(seller.name || "Thành viên")}</strong>${seller.phone ? ` • SĐT: ${escapeHtml(seller.phone)}` : ""}</div>
-            ${canManage ? `
-              <div class="item-actions">
-                <button class="btn btn-success" onclick="toggleSold('${it.id}', '${it.status}')">
-                  ${it.status === "sold" ? "Mở lại tin" : "Đánh dấu đã giao"}
-                </button>
-                <button class="btn btn-danger" onclick="deleteItem('${it.id}')">Xóa</button>
-              </div>
-            ` : ""}
-          </article>
-        `;
-      }).join("");
+    function compressImageToJpg(file, maxWidth = 1080, quality = 0.78) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const scale = Math.min(1, maxWidth / img.width);
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(
+              (blob) => (blob ? resolve(blob) : reject(new Error("Không nén được ảnh"))),
+              "image/jpeg",
+              quality
+            );
+          };
+          img.onerror = () => reject(new Error("File ảnh không hợp lệ"));
+          img.src = reader.result;
+        };
+        reader.onerror = () => reject(new Error("Không đọc được file"));
+        reader.readAsDataURL(file);
+      });
     }
 
-    window.toggleSold = async (id, curStatus) => {
-      const next = curStatus === "sold" ? "available" : "sold";
-      const { error } = await sb.from("tt_items").update({ status: next }).eq("id", id);
-      if (error) return alert("Lỗi cập nhật: " + viMsg(error.message));
-      await loadData();
+    postForm.onsubmit = async (e) => {
+      e.preventDefault();
+      hideBox(postErr);
+      if (!currentUser) return openAuthModal(false);
+
+      const seller_name = document.getElementById("pSellerName").value.trim();
+      const title = document.getElementById("pTitle").value.trim();
+      const condition = document.getElementById("pCondition").value.trim();
+      const address = document.getElementById("pAddress").value.trim();
+      const phone = document.getElementById("pPhone").value.trim();
+      const price = Math.max(0, Number(document.getElementById("pPrice").value || 0));
+      const file = document.getElementById("pImage").files[0];
+
+      btnSubmitPost.disabled = true;
+      let image_url = null;
+
+      try {
+        if (file) {
+          const jpgBlob = await compressImageToJpg(file);
+          const filePath = `${currentUser.id}/${Date.now()}.jpg`;
+          const { error: upErr } = await sb.storage
+            .from("tt-images")
+            .upload(filePath, jpgBlob, { contentType: "image/jpeg", upsert: true });
+          if (upErr) throw new Error("Lỗi tải ảnh: " + upErr.message);
+          image_url = sb.storage.from("tt-images").getPublicUrl(filePath).data.publicUrl;
+        }
+
+        const { error: insErr } = await sb.from("tt_items").insert({
+          user_id: currentUser.id,
+          seller_name,
+          title,
+          condition,
+          address,
+          phone,
+          price,
+          image_url,
+          is_sold: false
+        });
+        if (insErr) throw new Error("Lỗi lưu tin: " + insErr.message);
+
+        closePostModal();
+        await loadItems();
+      } catch (err) {
+        showBox(postErr, err.message);
+      } finally {
+        btnSubmitPost.disabled = false;
+      }
+    };
+
+    window.toggleSold = async (id, nextSold) => {
+      const { error } = await sb.from("tt_items").update({ is_sold: nextSold }).eq("id", id);
+      if (error) return alert("Lỗi cập nhật trạng thái: " + error.message);
+      await loadItems();
     };
 
     window.deleteItem = async (id) => {
       if (!confirm("Xóa tin đăng này?")) return;
       const { error } = await sb.from("tt_items").delete().eq("id", id);
-      if (error) return alert("Lỗi xóa tin: " + viMsg(error.message));
-      await loadData();
+      if (error) return alert("Lỗi xóa tin: " + error.message);
+      await loadItems();
     };
 
-    const authModal = document.getElementById("authModal");
-    const authErr = document.getElementById("authErr");
-
-    function openAuthModal(mode = "login") {
-      authMode = mode;
-      clearErr(authErr);
-      document.getElementById("tabLogin").classList.toggle("active", mode === "login");
-      document.getElementById("tabRegister").classList.toggle("active", mode === "register");
-      document.getElementById("registerFields").style.display = mode === "register" ? "block" : "none";
-      document.getElementById("btnSubmitAuth").textContent = mode === "login" ? "Đăng nhập" : "Tạo tài khoản";
-      authModal.classList.add("open");
-    }
-
-    document.getElementById("btnCloseAuth").addEventListener("click", () => authModal.classList.remove("open"));
-    document.getElementById("tabLogin").addEventListener("click", () => openAuthModal("login"));
-    document.getElementById("tabRegister").addEventListener("click", () => openAuthModal("register"));
-
-    document.getElementById("authForm").addEventListener("submit", async e => {
-      e.preventDefault();
-      clearErr(authErr);
-      const email = document.getElementById("aEmail").value.trim().toLowerCase();
-      const password = document.getElementById("aPassword").value;
-      const btn = document.getElementById("btnSubmitAuth");
-      btn.disabled = true;
-
-      try {
-        if (authMode === "login") {
-          const { error } = await sb.auth.signInWithPassword({ email, password });
-          if (error) throw error;
-        } else {
-          const name = document.getElementById("aName").value.trim();
-          const phone = document.getElementById("aPhone").value.trim();
-          if (!name) throw new Error("Vui lòng nhập Tên hiển thị.");
-          if (!phone) throw new Error("Vui lòng nhập Số điện thoại.");
-
-          const { error } = await sb.auth.signUp({
-            email,
-            password,
-            options: { data: { name, phone } }
-          });
-          if (error) throw error;
-        }
-        authModal.classList.remove("open");
-        document.getElementById("authForm").reset();
-      } catch (err) {
-        showErr(authErr, viMsg(err.message));
-      } finally {
-        btn.disabled = false;
-      }
-    });
-
-    const forgotWrap = document.getElementById("forgotWrap");
-    const fpEmail = document.getElementById("fpEmail");
-    document.getElementById("btnOpenForgot").addEventListener("click", () => {
-      forgotWrap.style.display = "block";
-      const curEmail = document.getElementById("aEmail").value.trim();
-      if (curEmail) fpEmail.value = curEmail;
-      fpEmail.focus();
-    });
-    document.getElementById("btnCancelReset").addEventListener("click", () => {
-      forgotWrap.style.display = "none";
-    });
-    document.getElementById("btnSendReset").addEventListener("click", async () => {
-      clearErr(authErr);
-      const email = fpEmail.value.trim().toLowerCase();
-      if (!email) return showErr(authErr, "Vui lòng nhập Gmail đã đăng ký.");
-
-      const btn = document.getElementById("btnSendReset");
-      btn.disabled = true;
-      const { error } = await sb.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + window.location.pathname
+    window.toggleSubAdmin = async (targetId, makeSub) => {
+      const { error } = await sb.rpc("set_sub_admin", {
+        target_user_id: targetId,
+        make_sub_admin: makeSub
       });
-      btn.disabled = false;
+      if (error) return alert("Lỗi đổi quyền: " + error.message);
+      await loadStaffPanel();
+    };
 
-      if (error) return showErr(authErr, viMsg(error.message));
-      alert("Nếu Gmail này đã đăng ký, hệ thống đã gửi link đặt lại mật khẩu. Hãy kiểm tra hộp thư (cả Spam).");
-      forgotWrap.style.display = "none";
-    });
-
-    async function compressImage(file, maxW = 1024, quality = 0.78) {
-      const bmp = await createImageBitmap(file);
-      const scale = Math.min(1, maxW / bmp.width);
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.round(bmp.width * scale);
-      canvas.height = Math.round(bmp.height * scale);
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
-      return new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", quality));
-    }
-
-    const postModal = document.getElementById("postModal");
-    const postErr = document.getElementById("postErr");
-
-    function openPostModal() {
-      if (!currentUser) {
-        openAuthModal("login");
+    async function loadStaffPanel() {
+      if (!currentUser || !isMainAdmin(currentProfile)) {
+        staffPanel.classList.remove("show");
         return;
       }
-      clearErr(postErr);
-      postModal.classList.add("open");
+      staffPanel.classList.add("show");
+      usersRoleList.innerHTML = `<div class="meta">Đang tải danh sách thành viên...</div>`;
+
+      const { data, error } = await sb.from("tt_profiles").select("*");
+      if (error) {
+        usersRoleList.innerHTML = `<div class="meta">Không đọc được danh sách hồ sơ: ${escapeHtml(error.message)}</div>`;
+        return;
+      }
+
+      const others = (data || []).filter((u) => u.id !== currentUser.id && !isMainAdmin(u));
+      if (!others.length) {
+        usersRoleList.innerHTML = `<div class="meta">Chưa có thành viên nào khác.</div>`;
+        return;
+      }
+
+      usersRoleList.innerHTML = others.map((u) => {
+        const uName = u.name || u["tên"] || u.id;
+        const uPhone = u.phone || u["điện thoại"] || "";
+        const sub = isSubAdmin(u);
+        return `
+          <div class="user-row">
+            <div>
+              <strong>${escapeHtml(uName)}</strong>
+              ${uPhone ? `<span class="meta"> • ${escapeHtml(uPhone)}</span>` : ""}
+              <span class="status-pill" style="margin-left:6px;">${sub ? "Phó Admin" : "Người dùng"}</span>
+            </div>
+            <button
+              type="button"
+              class="${sub ? "btn-danger" : "btn-success"}"
+              style="padding:6px 10px; font-size:13px;"
+              onclick="toggleSubAdmin('${u.id}', ${!sub})"
+            >
+              ${sub ? "Gỡ quyền Phó Admin" : "Cấp quyền Phó Admin"}
+            </button>
+          </div>
+        `;
+      }).join("");
     }
 
-    document.getElementById("btnClosePost").addEventListener("click", () => postModal.classList.remove("open"));
+    document.getElementById("btnRefreshUsers").onclick = loadStaffPanel;
 
-    document.getElementById("postForm").addEventListener("submit", async e => {
-      e.preventDefault();
-      clearErr(postErr);
-      if (!currentUser) return openAuthModal("login");
-
-      const title = document.getElementById("pTitle").value.trim();
-      const category = document.getElementById("pCategory").value;
-      const price = Number(document.getElementById("pPrice").value || 0);
-      const description = document.getElementById("pDesc").value.trim();
-      const file = document.getElementById("pImage").files[0];
-      const btn = document.getElementById("btnSubmitPost");
-      btn.disabled = true;
-
-      try {
-        let imageUrl = "";
-        if (file) {
-          const blob = await compressImage(file);
-          const path = `${currentUser.id}/${crypto.randomUUID()}.jpg`;
-          const { error: upErr } = await sb.storage
-            .from("tt-images")
-            .upload(path, blob, { contentType: "image/jpeg", upsert: false });
-          if (upErr) throw upErr;
-          const { data: pub } = sb.storage.from("tt-images").getPublicUrl(path);
-          imageUrl = pub.publicUrl;
-        }
-
-        const { error: insErr } = await sb.from("tt_items").insert({
-          user_id: currentUser.id,
-          title,
-          category,
-          price,
-          description,
-          image_url: imageUrl
-        });
-        if (insErr) throw insErr;
-
-        postModal.classList.remove("open");
-        document.getElementById("postForm").reset();
-        await loadData();
-      } catch (err) {
-        showErr(postErr, viMsg(err.message));
-      } finally {
-        btn.disabled = false;
+    function renderNav() {
+      if (!currentUser) {
+        navActions.innerHTML = `
+          <button type="button" id="btnOpenLogin" class="btn-ghost">Đăng nhập</button>
+          <button type="button" id="btnOpenRegister" class="btn-primary">Đăng ký</button>
+        `;
+        document.getElementById("btnOpenLogin").onclick = () => openAuthModal(false);
+        document.getElementById("btnOpenRegister").onclick = () => openAuthModal(true);
+        return;
       }
-    });
+      const displayName = currentProfile?.name || currentProfile?.["tên"] || currentUser.email;
+      const roleBadge = getRoleBadge(currentProfile);
+      navActions.innerHTML = `
+        <span class="badge-user">${escapeHtml(displayName)}${roleBadge ? " • " + escapeHtml(roleBadge) : ""}</span>
+        <button type="button" id="btnOpenPost" class="btn-primary">+ Đăng tin</button>
+        <button type="button" id="btnLogout" class="btn-ghost">Đăng xuất</button>
+      `;
+      document.getElementById("btnOpenPost").onclick = openPostModal;
+      document.getElementById("btnLogout").onclick = async () => {
+        await sb.auth.signOut();
+      };
+    }
 
-    document.getElementById("searchInput").addEventListener("input", renderItems);
-    document.getElementById("categoryFilter").addEventListener("change", renderItems);
+    function renderItems() {
+      const q = searchInput.value.trim().toLowerCase();
+      const status = filterStatus.value;
 
-    sb.auth.onAuthStateChange(async (event) => {
+      const filtered = allItems.filter((it) => {
+        if (status === "available" && it.is_sold) return false;
+        if (status === "sold" && !it.is_sold) return false;
+        if (!q) return true;
+        const hay = `${it.title} ${it.seller_name} ${it.condition} ${it.address} ${it.phone}`.toLowerCase();
+        return hay.includes(q);
+      });
+
+      if (!filtered.length) {
+        itemsList.innerHTML = `<div class="empty">Chưa có tin nào phù hợp. Hãy là người đầu tiên đăng tin!</div>`;
+        return;
+      }
+
+      const staff = isStaff(currentProfile);
+
+      itemsList.innerHTML = filtered.map((it) => {
+        const p = formatPrice(it.price);
+        const canManage = currentUser && (currentUser.id === it.user_id || staff);
+        return `
+          <article class="card ${it.is_sold ? "sold" : ""}">
+            ${it.image_url
+              ? `<img class="thumb" src="${escapeHtml(it.image_url)}" alt="${escapeHtml(it.title)}" loading="lazy" />`
+              : `<div class="thumb">Không có ảnh</div>`
+            }
+            <div class="card-body">
+              ${it.is_sold ? `<span class="status-pill">Đã bán / Đã giao</span>` : ""}
+              <div class="price ${p.free ? "free" : ""}">${escapeHtml(p.text)}</div>
+              <h3 class="title">${escapeHtml(it.title)}</h3>
+              <div class="meta"><strong>Tình trạng:</strong> ${escapeHtml(it.condition)}</div>
+              <div class="meta"><strong>Người bán:</strong> ${escapeHtml(it.seller_name)}</div>
+              <div class="meta"><strong>SĐT:</strong> ${escapeHtml(it.phone)}</div>
+              <div class="meta"><strong>Địa chỉ:</strong> ${escapeHtml(it.address)}</div>
+              ${canManage ? `
+                <div class="card-actions">
+                  <button type="button" class="btn-success" onclick="toggleSold('${it.id}', ${!it.is_sold})">
+                    ${it.is_sold ? "Mở lại tin" : "Đánh dấu đã bán"}
+                  </button>
+                  <button type="button" class="btn-danger" onclick="deleteItem('${it.id}')">Xóa</button>
+                </div>
+              ` : ""}
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function loadProfile(user) {
+      if (!user) {
+        currentProfile = null;
+        return;
+      }
+      const { data } = await sb.from("tt_profiles").select("*").eq("id", user.id).maybeSingle();
+      currentProfile = data || null;
+    }
+
+    async function loadItems() {
+      const { data, error } = await sb
+        .from("tt_items")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        itemsList.innerHTML = `<div class="empty">Không tải được danh sách tin: ${escapeHtml(error.message)}</div>`;
+        return;
+      }
+      allItems = data || [];
+      renderItems();
+    }
+
+    searchInput.oninput = renderItems;
+    filterStatus.onchange = renderItems;
+
+    sb.auth.onAuthStateChange(async (event, session) => {
+      currentUser = session?.user || null;
+      await loadProfile(currentUser);
+      renderNav();
+      await loadStaffPanel();
+      renderItems();
+
       if (event === "PASSWORD_RECOVERY") {
         const newPass = prompt("Nhập mật khẩu mới (tối thiểu 8 ký tự):");
         if (!newPass || newPass.length < 8) {
@@ -674,15 +689,17 @@
           return;
         }
         const { error } = await sb.auth.updateUser({ password: newPass });
-        alert(error ? "Đổi mật khẩu thất bại: " + viMsg(error.message) : "Đổi mật khẩu thành công!");
+        alert(error ? "Đổi mật khẩu lỗi: " + error.message : "Đổi mật khẩu thành công!");
       }
-      await loadSessionAndProfile();
-      await loadData();
     });
 
-    (async () => {
-      await loadSessionAndProfile();
-      await loadData();
+    (async function init() {
+      const { data: { session } } = await sb.auth.getSession();
+      currentUser = session?.user || null;
+      await loadProfile(currentUser);
+      renderNav();
+      await loadStaffPanel();
+      await loadItems();
     })();
   </script>
 </body>
