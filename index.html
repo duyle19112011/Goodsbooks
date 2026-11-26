@@ -167,13 +167,15 @@ const toast = m => { const t = $("#toast"); t.textContent = m; t.hidden = false;
 const viMsg = m => {
   m = String(m || "");
   if (/already registered/i.test(m)) return "Email này đã được đăng ký.";
+  if (/DUP_NAME|tt_profiles_name_unique/i.test(m)) return "Tên hiển thị này đã có người sử dụng.";
+  if (/DUP_PHONE|tt_profiles_phone_unique/i.test(m)) return "Số điện thoại này đã được đăng ký cho tài khoản khác.";
   if (/invalid login/i.test(m)) return "Sai email hoặc mật khẩu.";
   if (/not confirmed/i.test(m)) return "Email chưa được xác nhận. Hãy kiểm tra hộp thư.";
   if (/rate limit|too many/i.test(m)) return "Thao tác quá nhanh, hãy thử lại sau ít phút.";
   if (/password/i.test(m)) return "Mật khẩu không đạt yêu cầu (tối thiểu 8 ký tự).";
   return m;
 };
-
+  
 let items = [];
 let adminUsers = [];
 let hasUsers = true;
