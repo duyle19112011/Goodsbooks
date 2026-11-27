@@ -18,6 +18,7 @@
       --primary-hover: #4f46e5;
       --success: #10b981;
       --danger: #ef4444;
+      --amber: #f59e0b;
     }
     * { box-sizing: border-box; }
     body {
@@ -51,6 +52,7 @@
     button:disabled { opacity: 0.55; cursor: not-allowed; }
     .btn-primary { background: var(--primary); border-color: transparent; }
     .btn-primary:hover { background: var(--primary-hover); }
+    .btn-amber { background: rgba(245, 158, 11, 0.18); border-color: rgba(245, 158, 11, 0.45); color: #fcd34d; }
     .btn-ghost { background: transparent; }
     .btn-success { background: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.4); color: #6ee7b7; }
     .btn-danger { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
@@ -72,30 +74,61 @@
       background: var(--panel-2); border: 1px solid var(--border);
     }
     .grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px;
     }
     .card {
       background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
       overflow: hidden; display: flex; flex-direction: column;
     }
-    .card.sold { opacity: 0.68; }
+    .card.pinned { border-color: rgba(245, 158, 11, 0.55); }
+    .card.notice { border-color: rgba(99, 102, 241, 0.5); }
+    .card.sold { opacity: 0.72; }
     .thumb {
       width: 100%; height: 180px; object-fit: cover; background: var(--panel-2);
       display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px;
     }
     .card-body { padding: 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
-    .price { font-size: 17px; font-weight: 700; color: #34d399; }
-    .price.free { color: #93c5fd; }
-    .title { font-size: 16px; font-weight: 700; margin: 0; }
-    .meta { font-size: 13px; color: var(--muted); }
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; }
+    .pill-pin {
+      display: inline-block; width: fit-content; font-size: 12px; padding: 2px 8px;
+      border-radius: 999px; background: rgba(245, 158, 11, 0.2); color: #fcd34d; font-weight: 600;
+    }
+    .pill-notice {
+      display: inline-block; width: fit-content; font-size: 12px; padding: 2px 8px;
+      border-radius: 999px; background: rgba(99, 102, 241, 0.22); color: #c7d2fe; font-weight: 600;
+    }
     .status-pill {
       display: inline-block; width: fit-content; font-size: 12px; padding: 2px 8px;
       border-radius: 999px; background: rgba(245, 158, 11, 0.18); color: #fcd34d;
     }
+    .price { font-size: 17px; font-weight: 700; color: #34d399; }
+    .price.free { color: #93c5fd; }
+    .notice-tag { font-size: 14px; font-weight: 700; color: #a5b4fc; }
+    .title { font-size: 16px; font-weight: 700; margin: 0; }
+    .meta { font-size: 13px; color: var(--muted); white-space: pre-line; }
     .card-actions {
-      display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 10px;
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; padding-top: 10px;
       border-top: 1px solid var(--border);
     }
+    .qa-box {
+      margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .qa-head { font-size: 13px; font-weight: 700; color: #cbd5e1; }
+    .qa-list { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; }
+    .qa-item {
+      background: var(--panel-2); border: 1px solid var(--border); border-radius: 9px;
+      padding: 7px 10px; font-size: 13px;
+    }
+    .qa-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 2px; }
+    .qa-author { font-weight: 600; color: #e2e8f0; font-size: 12px; }
+    .qa-del {
+      background: none; border: none; color: #fca5a5; padding: 0 4px;
+      font-size: 12px; font-weight: 600;
+    }
+    .qa-form { display: flex; gap: 6px; }
+    .qa-form input { flex: 1; padding: 7px 10px; font-size: 13px; min-width: 0; }
+    .qa-form button { padding: 7px 11px; font-size: 13px; white-space: nowrap; }
     .empty {
       text-align: center; padding: 42px 16px; color: var(--muted);
       background: var(--panel); border: 1px dashed var(--border); border-radius: 14px;
@@ -148,9 +181,10 @@
     </section>
 
     <div class="toolbar">
-      <input id="searchInput" type="search" placeholder="Tìm theo tên vật phẩm, người bán, địa chỉ..." />
+      <input id="searchInput" type="search" placeholder="Tìm theo tên vật phẩm, thông báo, người đăng, địa chỉ..." />
       <select id="filterStatus">
-        <option value="all">Tất cả tin</option>
+        <option value="all">Tất cả bài đăng</option>
+        <option value="notice">📢 Thông báo</option>
         <option value="available">Còn hàng / Tặng</option>
         <option value="sold">Đã bán / Đã giao</option>
       </select>
@@ -270,6 +304,42 @@
     </div>
   </div>
 
+  <!-- Modal Đăng thông báo (Admin / Phó Admin) -->
+  <div id="noticeModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>📢 Đăng thông báo</h2>
+        <button type="button" id="btnCloseNotice" class="btn-ghost">✕</button>
+      </div>
+
+      <div id="noticeErr" class="err-box"></div>
+
+      <form id="noticeForm">
+        <div class="field">
+          <label for="nAuthor">Người đăng</label>
+          <input id="nAuthor" type="text" required placeholder="Ví dụ: Ban quản trị" />
+        </div>
+        <div class="field">
+          <label for="nTitle">Tiêu đề thông báo</label>
+          <input id="nTitle" type="text" required placeholder="Ví dụ: Quy định đăng tin & giao dịch" />
+        </div>
+        <div class="field">
+          <label for="nContent">Nội dung thông báo</label>
+          <textarea id="nContent" rows="4" required placeholder="Nhập nội dung thông báo chi tiết..."></textarea>
+        </div>
+        <div class="field">
+          <label for="nImage">Ảnh đính kèm (tùy chọn, tự nén JPG)</label>
+          <input id="nImage" type="file" accept="image/*" />
+        </div>
+
+        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+          <button type="button" id="btnCancelNotice" class="btn-ghost">Hủy</button>
+          <button type="submit" id="btnSubmitNotice" class="btn-primary">Đăng thông báo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = "https://enazqmppsnazycsrvutd.supabase.co";
     const SUPABASE_KEY = "sb_publishable_QjN1z2ZHccsBbrgnWINklg_nca4uWGU";
@@ -279,6 +349,7 @@
     let currentProfile = null;
     let isRegisterMode = false;
     let allItems = [];
+    let commentsByItem = {};
 
     const navActions = document.getElementById("navActions");
     const itemsList = document.getElementById("itemsList");
@@ -303,6 +374,11 @@
     const postErr = document.getElementById("postErr");
     const postForm = document.getElementById("postForm");
     const btnSubmitPost = document.getElementById("btnSubmitPost");
+
+    const noticeModal = document.getElementById("noticeModal");
+    const noticeErr = document.getElementById("noticeErr");
+    const noticeForm = document.getElementById("noticeForm");
+    const btnSubmitNotice = document.getElementById("btnSubmitNotice");
 
     function escapeHtml(str = "") {
       return String(str)
@@ -334,6 +410,10 @@
       if (isMainAdmin(profile)) return "Admin";
       if (isSubAdmin(profile)) return "Phó Admin";
       return "";
+    }
+
+    function getCurrentDisplayName() {
+      return currentProfile?.name || currentProfile?.["tên"] || currentUser?.email || "Thành viên";
     }
 
     function showBox(el, msg) {
@@ -385,10 +465,25 @@
       postModal.classList.remove("open");
     }
 
+    function openNoticeModal() {
+      if (!currentUser) return openAuthModal(false);
+      if (!isStaff(currentProfile)) return alert("Chỉ Admin hoặc Phó Admin mới được đăng thông báo.");
+      hideBox(noticeErr);
+      noticeForm.reset();
+      document.getElementById("nAuthor").value = getCurrentDisplayName();
+      noticeModal.classList.add("open");
+    }
+
+    function closeNoticeModal() {
+      noticeModal.classList.remove("open");
+    }
+
     document.getElementById("btnCloseAuth").onclick = closeAuthModal;
     document.getElementById("btnCancelAuth").onclick = closeAuthModal;
     document.getElementById("btnClosePost").onclick = closePostModal;
     document.getElementById("btnCancelPost").onclick = closePostModal;
+    document.getElementById("btnCloseNotice").onclick = closeNoticeModal;
+    document.getElementById("btnCancelNotice").onclick = closeNoticeModal;
     bindSwitchAuthButton();
 
     btnOpenForgot.onclick = () => {
@@ -468,6 +563,17 @@
       });
     }
 
+    async function uploadOptionalImage(file) {
+      if (!file) return null;
+      const jpgBlob = await compressImageToJpg(file);
+      const filePath = `${currentUser.id}/${Date.now()}.jpg`;
+      const { error: upErr } = await sb.storage
+        .from("tt-images")
+        .upload(filePath, jpgBlob, { contentType: "image/jpeg", upsert: true });
+      if (upErr) throw new Error("Lỗi tải ảnh: " + upErr.message);
+      return sb.storage.from("tt-images").getPublicUrl(filePath).data.publicUrl;
+    }
+
     postForm.onsubmit = async (e) => {
       e.preventDefault();
       hideBox(postErr);
@@ -482,21 +588,12 @@
       const file = document.getElementById("pImage").files[0];
 
       btnSubmitPost.disabled = true;
-      let image_url = null;
 
       try {
-        if (file) {
-          const jpgBlob = await compressImageToJpg(file);
-          const filePath = `${currentUser.id}/${Date.now()}.jpg`;
-          const { error: upErr } = await sb.storage
-            .from("tt-images")
-            .upload(filePath, jpgBlob, { contentType: "image/jpeg", upsert: true });
-          if (upErr) throw new Error("Lỗi tải ảnh: " + upErr.message);
-          image_url = sb.storage.from("tt-images").getPublicUrl(filePath).data.publicUrl;
-        }
-
+        const image_url = await uploadOptionalImage(file);
         const { error: insErr } = await sb.from("tt_items").insert({
           user_id: currentUser.id,
+          post_type: "item",
           seller_name,
           title,
           condition,
@@ -504,7 +601,8 @@
           phone,
           price,
           image_url,
-          is_sold: false
+          is_sold: false,
+          is_pinned: false
         });
         if (insErr) throw new Error("Lỗi lưu tin: " + insErr.message);
 
@@ -517,6 +615,79 @@
       }
     };
 
+    noticeForm.onsubmit = async (e) => {
+      e.preventDefault();
+      hideBox(noticeErr);
+      if (!currentUser) return openAuthModal(false);
+      if (!isStaff(currentProfile)) return showBox(noticeErr, "Chỉ Admin hoặc Phó Admin mới được đăng thông báo.");
+
+      const seller_name = document.getElementById("nAuthor").value.trim();
+      const title = document.getElementById("nTitle").value.trim();
+      const condition = document.getElementById("nContent").value.trim();
+      const file = document.getElementById("nImage").files[0];
+
+      btnSubmitNotice.disabled = true;
+
+      try {
+        const image_url = await uploadOptionalImage(file);
+        const { error: insErr } = await sb.from("tt_items").insert({
+          user_id: currentUser.id,
+          post_type: "notice",
+          seller_name,
+          title,
+          condition,
+          address: "Ban quản trị",
+          phone: "Thông báo chung",
+          price: 0,
+          image_url,
+          is_sold: false,
+          is_pinned: false
+        });
+        if (insErr) throw new Error("Lỗi đăng thông báo: " + insErr.message);
+
+        closeNoticeModal();
+        await loadItems();
+      } catch (err) {
+        showBox(noticeErr, err.message);
+      } finally {
+        btnSubmitNotice.disabled = false;
+      }
+    };
+
+    window.togglePin = async (id, nextPinned) => {
+      if (!isStaff(currentProfile)) return alert("Chỉ Admin hoặc Phó Admin mới có quyền ghim bài.");
+      const { error } = await sb.from("tt_items").update({ is_pinned: nextPinned }).eq("id", id);
+      if (error) return alert("Lỗi ghim bài: " + error.message);
+      await loadItems();
+    };
+
+    window.submitReply = async (event, itemId, inputId) => {
+      event.preventDefault();
+      if (!currentUser) return openAuthModal(false);
+
+      const input = document.getElementById(inputId);
+      const content = (input?.value || "").trim();
+      if (!content) return;
+
+      const { error } = await sb.from("tt_comments").insert({
+        item_id: itemId,
+        user_id: currentUser.id,
+        author_name: getCurrentDisplayName(),
+        content
+      });
+      if (error) return alert("Lỗi gửi hỏi đáp: " + error.message);
+
+      if (input) input.value = "";
+      await loadComments();
+    };
+
+    window.deleteComment = async (commentId) => {
+      if (!confirm("Xóa nội dung hỏi đáp này?")) return;
+      const { error } = await sb.from("tt_comments").delete().eq("id", commentId);
+      if (error) return alert("Lỗi xóa bình luận: " + error.message);
+      await loadComments();
+    };
+
     window.toggleSold = async (id, nextSold) => {
       const { error } = await sb.from("tt_items").update({ is_sold: nextSold }).eq("id", id);
       if (error) return alert("Lỗi cập nhật trạng thái: " + error.message);
@@ -524,9 +695,9 @@
     };
 
     window.deleteItem = async (id) => {
-      if (!confirm("Xóa tin đăng này?")) return;
+      if (!confirm("Xóa bài đăng này?")) return;
       const { error } = await sb.from("tt_items").delete().eq("id", id);
-      if (error) return alert("Lỗi xóa tin: " + error.message);
+      if (error) return alert("Lỗi xóa bài: " + error.message);
       await loadItems();
     };
 
@@ -620,63 +791,150 @@
         document.getElementById("btnOpenRegister").onclick = () => openAuthModal(true);
         return;
       }
-      const displayName = currentProfile?.name || currentProfile?.["tên"] || currentUser.email;
+      const displayName = getCurrentDisplayName();
       const roleBadge = getRoleBadge(currentProfile);
+      const staff = isStaff(currentProfile);
+
       navActions.innerHTML = `
         <span class="badge-user">${escapeHtml(displayName)}${roleBadge ? " • " + escapeHtml(roleBadge) : ""}</span>
+        ${staff ? `<button type="button" id="btnOpenNotice" class="btn-amber">+ Đăng thông báo</button>` : ""}
         <button type="button" id="btnOpenPost" class="btn-primary">+ Đăng tin</button>
         <button type="button" id="btnLogout" class="btn-ghost">Đăng xuất</button>
       `;
+      if (staff) document.getElementById("btnOpenNotice").onclick = openNoticeModal;
       document.getElementById("btnOpenPost").onclick = openPostModal;
       document.getElementById("btnLogout").onclick = async () => {
         await sb.auth.signOut();
       };
     }
 
+    function renderCommentsHtml(item) {
+      const list = commentsByItem[item.id] || [];
+      const staff = isStaff(currentProfile);
+      const inputId = `replyInput_${item.id}`;
+
+      const listHtml = list.length
+        ? list.map((c) => {
+            const canDel = currentUser && (currentUser.id === c.user_id || currentUser.id === item.user_id || staff);
+            return `
+              <div class="qa-item">
+                <div class="qa-top">
+                  <span class="qa-author">${escapeHtml(c.author_name)}</span>
+                  ${canDel ? `<button type="button" class="qa-del" onclick="deleteComment('${c.id}')">Xóa</button>` : ""}
+                </div>
+                <div>${escapeHtml(c.content)}</div>
+              </div>
+            `;
+          }).join("")
+        : `<div class="meta">Chưa có hỏi đáp nào.</div>`;
+
+      const formHtml = currentUser
+        ? `
+          <form class="qa-form" onsubmit="submitReply(event, '${item.id}', '${inputId}')">
+            <input id="${inputId}" type="text" required maxlength="300" placeholder="Hỏi hoặc trả lời..." />
+            <button type="submit" class="btn-primary">Gửi</button>
+          </form>
+        `
+        : `<button type="button" class="link-btn" style="text-align:left; font-size:12px;" onclick="openAuthModal(false)">Đăng nhập để hỏi đáp</button>`;
+
+      return `
+        <div class="qa-box">
+          <div class="qa-head">💬 Hỏi đáp (${list.length})</div>
+          <div class="qa-list">${listHtml}</div>
+          ${formHtml}
+        </div>
+      `;
+    }
+
     function renderItems() {
       const q = searchInput.value.trim().toLowerCase();
       const status = filterStatus.value;
 
-      const filtered = allItems.filter((it) => {
-        if (status === "available" && it.is_sold) return false;
-        if (status === "sold" && !it.is_sold) return false;
+      const sorted = [...allItems].sort((a, b) => {
+        const pinDiff = Number(Boolean(b.is_pinned)) - Number(Boolean(a.is_pinned));
+        if (pinDiff !== 0) return pinDiff;
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      });
+
+      const filtered = sorted.filter((it) => {
+        const isNotice = it.post_type === "notice";
+        if (status === "notice" && !isNotice) return false;
+        if (status === "available" && (isNotice || it.is_sold)) return false;
+        if (status === "sold" && (isNotice || !it.is_sold)) return false;
         if (!q) return true;
         const hay = `${it.title} ${it.seller_name} ${it.condition} ${it.address} ${it.phone}`.toLowerCase();
         return hay.includes(q);
       });
 
       if (!filtered.length) {
-        itemsList.innerHTML = `<div class="empty">Chưa có tin nào phù hợp. Hãy là người đầu tiên đăng tin!</div>`;
+        itemsList.innerHTML = `<div class="empty">Chưa có bài đăng nào phù hợp.</div>`;
         return;
       }
 
       const staff = isStaff(currentProfile);
 
       itemsList.innerHTML = filtered.map((it) => {
-        const p = formatPrice(it.price);
+        const isNotice = it.post_type === "notice";
+        const isPinned = Boolean(it.is_pinned);
         const canManage = currentUser && (currentUser.id === it.user_id || staff);
+
+        const badgesHtml = (isPinned || isNotice || (!isNotice && it.is_sold))
+          ? `<div class="badges">
+              ${isPinned ? `<span class="pill-pin">📌 Đã ghim</span>` : ""}
+              ${isNotice ? `<span class="pill-notice">📢 Thông báo</span>` : ""}
+              ${!isNotice && it.is_sold ? `<span class="status-pill">Đã bán / Đã giao</span>` : ""}
+            </div>`
+          : "";
+
+        let bodyInfoHtml = "";
+        if (isNotice) {
+          bodyInfoHtml = `
+            <div class="notice-tag">Thông báo từ Ban quản trị</div>
+            <h3 class="title">${escapeHtml(it.title)}</h3>
+            <div class="meta">${escapeHtml(it.condition)}</div>
+            <div class="meta"><strong>Người đăng:</strong> ${escapeHtml(it.seller_name)}</div>
+          `;
+        } else {
+          const p = formatPrice(it.price);
+          bodyInfoHtml = `
+            <div class="price ${p.free ? "free" : ""}">${escapeHtml(p.text)}</div>
+            <h3 class="title">${escapeHtml(it.title)}</h3>
+            <div class="meta"><strong>Tình trạng:</strong> ${escapeHtml(it.condition)}</div>
+            <div class="meta"><strong>Người bán:</strong> ${escapeHtml(it.seller_name)}</div>
+            <div class="meta"><strong>SĐT:</strong> ${escapeHtml(it.phone)}</div>
+            <div class="meta"><strong>Địa chỉ:</strong> ${escapeHtml(it.address)}</div>
+          `;
+        }
+
+        const actionsHtml = (canManage || staff)
+          ? `<div class="card-actions">
+              ${staff ? `
+                <button type="button" class="btn-amber" onclick="togglePin('${it.id}', ${!isPinned})">
+                  ${isPinned ? "Bỏ ghim" : "Ghim bài"}
+                </button>
+              ` : ""}
+              ${!isNotice && canManage ? `
+                <button type="button" class="btn-success" onclick="toggleSold('${it.id}', ${!it.is_sold})">
+                  ${it.is_sold ? "Mở lại tin" : "Đánh dấu đã bán"}
+                </button>
+              ` : ""}
+              ${canManage ? `
+                <button type="button" class="btn-danger" onclick="deleteItem('${it.id}')">Xóa</button>
+              ` : ""}
+            </div>`
+          : "";
+
         return `
-          <article class="card ${it.is_sold ? "sold" : ""}">
+          <article class="card ${isPinned ? "pinned" : ""} ${isNotice ? "notice" : ""} ${!isNotice && it.is_sold ? "sold" : ""}">
             ${it.image_url
               ? `<img class="thumb" src="${escapeHtml(it.image_url)}" alt="${escapeHtml(it.title)}" loading="lazy" />`
-              : `<div class="thumb">Không có ảnh</div>`
+              : (!isNotice ? `<div class="thumb">Không có ảnh</div>` : "")
             }
             <div class="card-body">
-              ${it.is_sold ? `<span class="status-pill">Đã bán / Đã giao</span>` : ""}
-              <div class="price ${p.free ? "free" : ""}">${escapeHtml(p.text)}</div>
-              <h3 class="title">${escapeHtml(it.title)}</h3>
-              <div class="meta"><strong>Tình trạng:</strong> ${escapeHtml(it.condition)}</div>
-              <div class="meta"><strong>Người bán:</strong> ${escapeHtml(it.seller_name)}</div>
-              <div class="meta"><strong>SĐT:</strong> ${escapeHtml(it.phone)}</div>
-              <div class="meta"><strong>Địa chỉ:</strong> ${escapeHtml(it.address)}</div>
-              ${canManage ? `
-                <div class="card-actions">
-                  <button type="button" class="btn-success" onclick="toggleSold('${it.id}', ${!it.is_sold})">
-                    ${it.is_sold ? "Mở lại tin" : "Đánh dấu đã bán"}
-                  </button>
-                  <button type="button" class="btn-danger" onclick="deleteItem('${it.id}')">Xóa</button>
-                </div>
-              ` : ""}
+              ${badgesHtml}
+              ${bodyInfoHtml}
+              ${actionsHtml}
+              ${renderCommentsHtml(it)}
             </div>
           </article>
         `;
@@ -692,17 +950,36 @@
       currentProfile = data || null;
     }
 
+    async function loadComments() {
+      const { data, error } = await sb
+        .from("tt_comments")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (error) {
+        commentsByItem = {};
+        return;
+      }
+      const grouped = {};
+      for (const row of data || []) {
+        if (!grouped[row.item_id]) grouped[row.item_id] = [];
+        grouped[row.item_id].push(row);
+      }
+      commentsByItem = grouped;
+      renderItems();
+    }
+
     async function loadItems() {
       const { data, error } = await sb
         .from("tt_items")
         .select("*")
         .order("created_at", { ascending: false });
       if (error) {
-        itemsList.innerHTML = `<div class="empty">Không tải được danh sách tin: ${escapeHtml(error.message)}</div>`;
+        itemsList.innerHTML = `<div class="empty">Không tải được danh sách bài: ${escapeHtml(error.message)}</div>`;
         return;
       }
       allItems = data || [];
       renderItems();
+      await loadComments();
     }
 
     searchInput.oninput = renderItems;
