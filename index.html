@@ -74,7 +74,7 @@
       background: var(--panel-2); border: 1px solid var(--border);
     }
     .grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(295px, 1fr)); gap: 16px;
     }
     .card {
       background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
@@ -115,17 +115,39 @@
       display: flex; flex-direction: column; gap: 8px;
     }
     .qa-head { font-size: 13px; font-weight: 700; color: #cbd5e1; }
-    .qa-list { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; }
+    .qa-list {
+      display: flex; flex-direction: column; gap: 6px;
+      max-height: 260px; overflow-y: auto; padding-right: 2px;
+    }
+    .qa-thread { display: flex; flex-direction: column; gap: 4px; }
     .qa-item {
       background: var(--panel-2); border: 1px solid var(--border); border-radius: 9px;
       padding: 7px 10px; font-size: 13px;
     }
-    .qa-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 2px; }
-    .qa-author { font-weight: 600; color: #e2e8f0; font-size: 12px; }
-    .qa-del {
-      background: none; border: none; color: #fca5a5; padding: 0 4px;
-      font-size: 12px; font-weight: 600;
+    .qa-item.reply {
+      border-left: 2px solid var(--primary);
+      background: rgba(26, 36, 61, 0.72);
     }
+    .qa-top {
+      display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 2px;
+    }
+    .qa-author { font-weight: 600; color: #e2e8f0; font-size: 12px; }
+    .qa-arrow { color: #93c5fd; font-weight: 600; }
+    .qa-mini-actions { display: flex; align-items: center; gap: 6px; }
+    .qa-link {
+      background: none; border: none; color: #93c5fd; padding: 0 3px;
+      font-size: 11px; font-weight: 600;
+    }
+    .qa-del {
+      background: none; border: none; color: #fca5a5; padding: 0 3px;
+      font-size: 11px; font-weight: 600;
+    }
+    .qa-target-bar {
+      display: none; align-items: center; justify-content: space-between; gap: 8px;
+      font-size: 12px; color: #93c5fd; background: rgba(99, 102, 241, 0.14);
+      border: 1px solid rgba(99, 102, 241, 0.35); border-radius: 8px; padding: 5px 8px;
+    }
+    .qa-target-bar.show { display: flex; }
     .qa-form { display: flex; gap: 6px; }
     .qa-form input { flex: 1; padding: 7px 10px; font-size: 13px; min-width: 0; }
     .qa-form button { padding: 7px 11px; font-size: 13px; white-space: nowrap; }
@@ -350,6 +372,7 @@
     let isRegisterMode = false;
     let allItems = [];
     let commentsByItem = {};
+    let activeReplyTarget = {};
 
     const navActions = document.getElementById("navActions");
     const itemsList = document.getElementById("itemsList");
@@ -386,6 +409,10 @@
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;");
+    }
+
+    function escapeJsAttr(str = "") {
+      return escapeHtml(str).replaceAll("'", "&#39;");
     }
 
     function formatPrice(val) {
@@ -661,6 +688,19 @@
       await loadItems();
     };
 
+    window.selectReplyTarget = (itemId, commentId, authorName) => {
+      if (!currentUser) return openAuthModal(false);
+      activeReplyTarget[itemId] = { id: commentId, author_name: authorName };
+      renderItems();
+      const input = document.getElementById(`replyInput_${itemId}`);
+      if (input) input.focus();
+    };
+
+    window.clearReplyTarget = (itemId) => {
+      delete activeReplyTarget[itemId];
+      renderItems();
+    };
+
     window.submitReply = async (event, itemId, inputId) => {
       event.preventDefault();
       if (!currentUser) return openAuthModal(false);
@@ -669,20 +709,24 @@
       const content = (input?.value || "").trim();
       if (!content) return;
 
+      const target = activeReplyTarget[itemId] || null;
+
       const { error } = await sb.from("tt_comments").insert({
         item_id: itemId,
         user_id: currentUser.id,
         author_name: getCurrentDisplayName(),
-        content
+        content,
+        parent_id: target ? target.id : null
       });
       if (error) return alert("Lỗi gửi hỏi đáp: " + error.message);
 
+      delete activeReplyTarget[itemId];
       if (input) input.value = "";
       await loadComments();
     };
 
     window.deleteComment = async (commentId) => {
-      if (!confirm("Xóa nội dung hỏi đáp này?")) return;
+      if (!confirm("Xóa nội dung hỏi đáp này (kèm các trả lời bên dưới)?")) return;
       const { error } = await sb.from("tt_comments").delete().eq("id", commentId);
       if (error) return alert("Lỗi xóa bình luận: " + error.message);
       await loadComments();
@@ -748,7 +792,7 @@
         const uName = u.name || u["tên"] || u.id;
         const uPhone = u.phone || u["điện thoại"] || "";
         const sub = isSubAdmin(u);
-        const safeName = escapeHtml(uName).replaceAll("'", "\\'");
+        const safeName = escapeJsAttr(uName);
         return `
           <div class="user-row">
             <div>
@@ -808,30 +852,114 @@
       };
     }
 
+    function renderSingleComment(c, item, staff, isReply = false, targetAuthorName = "", indentPx = 0) {
+      const canDel = currentUser && (currentUser.id === c.user_id || currentUser.id === item.user_id || staff);
+      const authorLabel = isReply && targetAuthorName
+        ? `${escapeHtml(c.author_name)} <span class="qa-arrow">-></span> ${escapeHtml(targetAuthorName)}`
+        : escapeHtml(c.author_name);
+      const styleAttr = indentPx > 0 ? `style="margin-left:${indentPx}px;"` : "";
+
+      return `
+        <div class="qa-item ${isReply ? "reply" : ""}" ${styleAttr}>
+          <div class="qa-top">
+            <span class="qa-author">${authorLabel}</span>
+            <span class="qa-mini-actions">
+              <button type="button" class="qa-link" onclick="selectReplyTarget('${item.id}', '${c.id}', '${escapeJsAttr(c.author_name)}')">Trả lời</button>
+              ${canDel ? `<button type="button" class="qa-del" onclick="deleteComment('${c.id}')">Xóa</button>` : ""}
+            </span>
+          </div>
+          <div>${escapeHtml(c.content)}</div>
+        </div>
+      `;
+    }
+
     function renderCommentsHtml(item) {
       const list = commentsByItem[item.id] || [];
       const staff = isStaff(currentProfile);
       const inputId = `replyInput_${item.id}`;
+      const selectedTarget = activeReplyTarget[item.id] || null;
 
-      const listHtml = list.length
-        ? list.map((c) => {
-            const canDel = currentUser && (currentUser.id === c.user_id || currentUser.id === item.user_id || staff);
-            return `
-              <div class="qa-item">
-                <div class="qa-top">
-                  <span class="qa-author">${escapeHtml(c.author_name)}</span>
-                  ${canDel ? `<button type="button" class="qa-del" onclick="deleteComment('${c.id}')">Xóa</button>` : ""}
-                </div>
-                <div>${escapeHtml(c.content)}</div>
-              </div>
-            `;
+      const byId = {};
+      for (const c of list) byId[c.id] = c;
+
+      const getRootId = (c) => {
+        let cur = c;
+        const seen = new Set([cur.id]);
+        while (cur.parent_id && byId[cur.parent_id] && !seen.has(cur.parent_id)) {
+          cur = byId[cur.parent_id];
+          seen.add(cur.id);
+        }
+        return cur.id;
+      };
+
+      const roots = list.filter((c) => !c.parent_id || !byId[c.parent_id]);
+      const childrenByParent = {};
+      const repliesByRoot = {};
+
+      for (const c of list) {
+        if (c.parent_id && byId[c.parent_id]) {
+          if (!childrenByParent[c.parent_id]) childrenByParent[c.parent_id] = [];
+          childrenByParent[c.parent_id].push(c);
+
+          const rId = getRootId(c);
+          if (!repliesByRoot[rId]) repliesByRoot[rId] = [];
+          repliesByRoot[rId].push(c);
+        }
+      }
+
+      const listHtml = roots.length
+        ? roots.map((root) => {
+            const visited = new Set([root.id]);
+            const threadParts = [renderSingleComment(root, item, staff, false, "", 0)];
+
+            const walkReplies = (parentId, depth) => {
+              const directChildren = childrenByParent[parentId] || [];
+              for (const child of directChildren) {
+                if (visited.has(child.id)) continue;
+                visited.add(child.id);
+                const parentObj = byId[child.parent_id];
+                const indent = Math.min(24, 12 + Math.max(0, depth - 1) * 6);
+                threadParts.push(
+                  renderSingleComment(child, item, staff, true, parentObj?.author_name || "", indent)
+                );
+                walkReplies(child.id, depth + 1);
+              }
+            };
+
+            walkReplies(root.id, 1);
+
+            for (const r of (repliesByRoot[root.id] || [])) {
+              if (!visited.has(r.id)) {
+                visited.add(r.id);
+                const pObj = byId[r.parent_id];
+                threadParts.push(renderSingleComment(r, item, staff, true, pObj?.author_name || "", 12));
+              }
+            }
+
+            return `<div class="qa-thread">${threadParts.join("")}</div>`;
           }).join("")
         : `<div class="meta">Chưa có hỏi đáp nào.</div>`;
 
+      const targetBarHtml = currentUser
+        ? `
+          <div class="qa-target-bar ${selectedTarget ? "show" : ""}">
+            <span>Đang trả lời <strong>${escapeHtml(selectedTarget?.author_name || "")}</strong></span>
+            <button type="button" class="qa-del" onclick="clearReplyTarget('${item.id}')">✕ Hủy</button>
+          </div>
+        `
+        : "";
+
       const formHtml = currentUser
         ? `
+          ${targetBarHtml}
           <form class="qa-form" onsubmit="submitReply(event, '${item.id}', '${inputId}')">
-            <input id="${inputId}" type="text" required maxlength="300" placeholder="Hỏi hoặc trả lời..." />
+            <input
+              id="${inputId}"
+              type="text"
+              required
+              maxlength="300"
+              placeholder="${selectedTarget ? `Trả lời ${escapeHtml(selectedTarget.author_name)}...` : "Hỏi hoặc bình luận..."}"
+            />
             <button type="submit" class="btn-primary">Gửi</button>
           </form>
         `
