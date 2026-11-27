@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trao Tay — Mua bán, cho tặng & trao đổi đồ cũ</title>
+  <link rel="icon" type="image/jpeg" href="./logo-phuoc-vinh.jpg" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
@@ -32,6 +33,10 @@
       gap: 12px; padding: 14px 0 20px; border-bottom: 1px solid var(--border);
     }
     .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; }
+    .brand-logo {
+      width: 34px; height: 34px; border-radius: 50%;
+      object-fit: cover; background: #fff; flex-shrink: 0;
+    }
     .nav-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .badge-user {
       padding: 6px 10px; border-radius: 999px; background: var(--panel-2);
@@ -127,7 +132,10 @@
 <body>
   <div class="container">
     <header>
-      <div class="brand">🤝 <span>Trao Tay</span></div>
+      <div class="brand">
+        <img class="brand-logo" src="./logo-phuoc-vinh.jpg" alt="Logo Trường THPT Phước Vĩnh" />
+        <span>Trao Tay</span>
+      </div>
       <div class="nav-actions" id="navActions">
         <button type="button" id="btnOpenLogin" class="btn-ghost">Đăng nhập</button>
         <button type="button" id="btnOpenRegister" class="btn-primary">Đăng ký</button>
