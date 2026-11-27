@@ -136,7 +136,7 @@
 
     <section class="hero">
       <h1>Mua bán, cho tặng và trao đổi đồ cũ.</h1>
-      <p>Đăng món đồ bạn muốn bán, cho đi hoặc đổi</p>
+      <p>Đăng món đồ bạn muốn bán, cho đi hoặc đổi — gọn gàng, trực tiếp, không qua trung gian.</p>
     </section>
 
     <div class="toolbar">
@@ -150,7 +150,7 @@
 
     <section id="staffPanel" class="staff-panel">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
-        <strong>🛡️ Quản lý quyền Phó Admin</strong>
+        <strong>🛡️ Quản lý thành viên & quyền Phó Admin</strong>
         <button type="button" id="btnRefreshUsers" class="btn-ghost" style="padding:6px 10px; font-size:13px;">Tải lại</button>
       </div>
       <div id="usersRoleList" style="display:grid; gap:8px;"></div>
@@ -173,11 +173,11 @@
         <div id="registerFields" style="display:none;">
           <div class="field">
             <label for="regName">Tên hiển thị (không trùng)</label>
-            <input id="regName" type="text" placeholder="Ví dụ: Nguyễn Văn A" />
+            <input id="regName" type="text" placeholder="Ví dụ: DuyLe" />
           </div>
           <div class="field">
             <label for="regPhone">Số điện thoại (không trùng)</label>
-            <input id="regPhone" type="tel" placeholder="Ví dụ: 0912345678" />
+            <input id="regPhone" type="tel" placeholder="Ví dụ: 0967552130" />
           </div>
         </div>
 
@@ -250,7 +250,7 @@
           <input id="pPrice" type="number" min="0" step="1000" value="0" required />
         </div>
         <div class="field">
-          <label for="pImage">Ảnh món đồ</label>
+          <label for="pImage">Ảnh món đồ (tùy chọn, tự nén JPG)</label>
           <input id="pImage" type="file" accept="image/*" />
         </div>
 
@@ -531,6 +531,20 @@
       await loadStaffPanel();
     };
 
+    window.deleteUserAccount = async (targetId, userName) => {
+      const ok = confirm(`Xóa vĩnh viễn tài khoản "${userName}" và toàn bộ tin đăng của người này?`);
+      if (!ok) return;
+
+      const { error } = await sb.rpc("delete_user_by_admin", {
+        target_user_id: targetId
+      });
+      if (error) return alert("Lỗi xóa tài khoản: " + error.message);
+
+      alert("Đã xóa tài khoản thành công!");
+      await loadStaffPanel();
+      await loadItems();
+    };
+
     async function loadStaffPanel() {
       if (!currentUser || !isMainAdmin(currentProfile)) {
         staffPanel.classList.remove("show");
@@ -555,6 +569,7 @@
         const uName = u.name || u["tên"] || u.id;
         const uPhone = u.phone || u["điện thoại"] || "";
         const sub = isSubAdmin(u);
+        const safeName = escapeHtml(uName).replaceAll("'", "\\'");
         return `
           <div class="user-row">
             <div>
@@ -562,14 +577,24 @@
               ${uPhone ? `<span class="meta"> • ${escapeHtml(uPhone)}</span>` : ""}
               <span class="status-pill" style="margin-left:6px;">${sub ? "Phó Admin" : "Người dùng"}</span>
             </div>
-            <button
-              type="button"
-              class="${sub ? "btn-danger" : "btn-success"}"
-              style="padding:6px 10px; font-size:13px;"
-              onclick="toggleSubAdmin('${u.id}', ${!sub})"
-            >
-              ${sub ? "Gỡ quyền Phó Admin" : "Cấp quyền Phó Admin"}
-            </button>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+              <button
+                type="button"
+                class="${sub ? "btn-danger" : "btn-success"}"
+                style="padding:6px 10px; font-size:13px;"
+                onclick="toggleSubAdmin('${u.id}', ${!sub})"
+              >
+                ${sub ? "Gỡ quyền Phó Admin" : "Cấp quyền Phó Admin"}
+              </button>
+              <button
+                type="button"
+                class="btn-danger"
+                style="padding:6px 10px; font-size:13px;"
+                onclick="deleteUserAccount('${u.id}', '${safeName}')"
+              >
+                Xóa TK
+              </button>
+            </div>
           </div>
         `;
       }).join("");
