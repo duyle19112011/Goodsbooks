@@ -61,6 +61,7 @@
     .btn-ghost { background: transparent; }
     .btn-success { background: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.4); color: #6ee7b7; }
     .btn-danger { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.4); color: #fca5a5; }
+    .btn-info { background: rgba(99, 102, 241, 0.16); border-color: rgba(99, 102, 241, 0.45); color: #c7d2fe; }
     .hero { padding: 24px 0 14px; }
     .hero h1 { margin: 0 0 6px; font-size: clamp(24px, 4vw, 34px); }
     .hero p { margin: 0; color: var(--muted); }
@@ -149,6 +150,10 @@
     .status-pill {
       display: inline-block; width: fit-content; font-size: 12px; padding: 2px 8px;
       border-radius: 999px; background: rgba(245, 158, 11, 0.18); color: #fcd34d;
+    }
+    .pill-wait {
+      display: inline-block; width: fit-content; font-size: 12px; padding: 2px 8px;
+      border-radius: 999px; background: rgba(148, 163, 184, 0.2); color: #e2e8f0; font-weight: 600;
     }
     .price { font-size: 17px; font-weight: 700; color: #34d399; }
     .price.free { color: #93c5fd; }
@@ -411,6 +416,51 @@
     </div>
   </div>
 
+  <!-- Modal Sửa bài đăng -->
+  <div id="editModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>✏️ Sửa bài đăng</h2>
+        <button type="button" id="btnCloseEdit" class="btn-ghost">✕</button>
+      </div>
+
+      <div id="editErr" class="err-box"></div>
+
+      <form id="editForm">
+        <input type="hidden" id="eId" />
+        <div class="field">
+          <label for="eTitle">Tên vật phẩm</label>
+          <input id="eTitle" type="text" required />
+        </div>
+        <div class="field">
+          <label for="eCondition">Tình trạng vật phẩm</label>
+          <input id="eCondition" type="text" required />
+        </div>
+        <div class="field">
+          <label for="eAddress">Địa chỉ</label>
+          <input id="eAddress" type="text" required />
+        </div>
+        <div class="field">
+          <label for="ePhone">Số điện thoại</label>
+          <input id="ePhone" type="tel" required />
+        </div>
+        <div class="field">
+          <label for="ePrice">Giá bán (0 VNĐ nếu tặng)</label>
+          <input id="ePrice" type="number" min="0" step="1000" required />
+        </div>
+        <div class="field">
+          <label for="eImage">Đổi ảnh (bỏ trống nếu giữ ảnh cũ)</label>
+          <input id="eImage" type="file" accept="image/*" />
+        </div>
+
+        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+          <button type="button" id="btnCancelEdit" class="btn-ghost">Hủy</button>
+          <button type="submit" id="btnSubmitEdit" class="btn-primary">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal Đăng thông báo (Admin / Phó Admin) -->
   <div id="noticeModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal">
@@ -491,6 +541,11 @@
     const postErr = document.getElementById("postErr");
     const postForm = document.getElementById("postForm");
     const btnSubmitPost = document.getElementById("btnSubmitPost");
+
+    const editModal = document.getElementById("editModal");
+    const editErr = document.getElementById("editErr");
+    const editForm = document.getElementById("editForm");
+    const btnSubmitEdit = document.getElementById("btnSubmitEdit");
 
     const noticeModal = document.getElementById("noticeModal");
     const noticeErr = document.getElementById("noticeErr");
@@ -663,6 +718,12 @@
       return currentUser.id === item.user_id;
     }
 
+    // Chỉ dùng để hiện nút Sửa. Database sẽ chặn nếu không đủ quyền.
+    function canEditItem(item) {
+      if (!currentUser || item.post_type === "notice") return false;
+      return currentUser.id === item.user_id || isMainAdmin(currentProfile) || isSubAdmin(currentProfile);
+    }
+
     function getRoleBadge(profile) {
       if (isMainAdmin(profile)) return "Admin";
       if (isSubAdmin(profile)) return "Phó Admin";
@@ -723,6 +784,25 @@
       postModal.classList.remove("open");
     }
 
+    function openEditModal(id) {
+      if (!currentUser) return openAuthModal(false);
+      const it = allItems.find((x) => String(x.id) === String(id));
+      if (!it) return alert("Không tìm thấy bài đăng này (có thể đã bị xóa).");
+      hideBox(editErr);
+      document.getElementById("eId").value = it.id;
+      document.getElementById("eTitle").value = it.title || "";
+      document.getElementById("eCondition").value = it.condition || "";
+      document.getElementById("eAddress").value = it.address || "";
+      document.getElementById("ePhone").value = ("phone" in it) ? (it.phone || "") : "";
+      document.getElementById("ePrice").value = Number(it.price || 0);
+      document.getElementById("eImage").value = "";
+      editModal.classList.add("open");
+    }
+
+    function closeEditModal() {
+      editModal.classList.remove("open");
+    }
+
     function openNoticeModal() {
       if (!currentUser) return openAuthModal(false);
       if (!isStaff(currentProfile)) return alert("Chỉ Admin hoặc Phó Admin mới được đăng thông báo.");
@@ -744,6 +824,8 @@
     document.getElementById("btnCancelAuth").onclick = closeAuthModal;
     document.getElementById("btnClosePost").onclick = closePostModal;
     document.getElementById("btnCancelPost").onclick = closePostModal;
+    document.getElementById("btnCloseEdit").onclick = closeEditModal;
+    document.getElementById("btnCancelEdit").onclick = closeEditModal;
     document.getElementById("btnCloseNotice").onclick = closeNoticeModal;
     document.getElementById("btnCancelNotice").onclick = closeNoticeModal;
     bindSwitchAuthButton();
@@ -875,6 +957,45 @@
         showBox(postErr, err.message);
       } finally {
         btnSubmitPost.disabled = false;
+      }
+    };
+
+    editForm.onsubmit = async (e) => {
+      e.preventDefault();
+      hideBox(editErr);
+      if (!currentUser) return openAuthModal(false);
+
+      const id = document.getElementById("eId").value;
+      const item = allItems.find((x) => String(x.id) === String(id));
+      if (!item) return showBox(editErr, "Bài đăng không còn tồn tại.");
+
+      const file = document.getElementById("eImage").files[0];
+      const payload = {
+        title: document.getElementById("eTitle").value.trim(),
+        condition: document.getElementById("eCondition").value.trim(),
+        address: document.getElementById("eAddress").value.trim(),
+        phone: document.getElementById("ePhone").value.trim(),
+        price: Math.max(0, Number(document.getElementById("ePrice").value || 0))
+      };
+
+      btnSubmitEdit.disabled = true;
+
+      try {
+        if (file) payload.image_url = await uploadOptionalImage(file);
+
+        const { data, error } = await sb.from("tt_items").update(payload).eq("id", id).select();
+        if (error) throw new Error("Lỗi sửa bài: " + error.message);
+        // RLS từ chối thì không báo lỗi mà trả về mảng rỗng
+        if (!data || !data.length) throw new Error("Bạn không có quyền sửa bài này.");
+
+        const ownerNotStaff = currentUser.id === item.user_id && !isStaff(currentProfile);
+        closeEditModal();
+        await loadItems();
+        if (ownerNotStaff) alert("Đã lưu. Bài sẽ được gửi lại để duyệt.");
+      } catch (err) {
+        showBox(editErr, err.message);
+      } finally {
+        btnSubmitEdit.disabled = false;
       }
     };
 
@@ -1266,6 +1387,7 @@
         const isPinned = Boolean(it.is_pinned);
         const canManageOwner = currentUser && (currentUser.id === it.user_id || isMainAdmin(currentProfile));
         const canDel = canDeleteItem(it);
+        const canEdit = canEditItem(it);
         const isCheckedInCart = cartIds.includes(String(it.id));
 
         const cartActionHtml = !isNotice
@@ -1281,11 +1403,18 @@
             </button>`
           : "";
 
-        const badgesHtml = (isPinned || isNotice || (!isNotice && it.is_sold))
+        // Nhãn chờ duyệt: chỉ chủ bài và staff thấy
+        const canSeePending = currentUser && (currentUser.id === it.user_id || staff);
+        const pendingBadge = (it.status === "pending" && canSeePending)
+          ? `<span class="pill-wait">⏳ Chờ duyệt</span>`
+          : "";
+
+        const badgesHtml = (isPinned || isNotice || (!isNotice && it.is_sold) || pendingBadge)
           ? `<div class="badges">
               ${isPinned ? `<span class="pill-pin">📌 Đã ghim</span>` : ""}
               ${isNotice ? `<span class="pill-notice">📢 Thông báo</span>` : ""}
               ${!isNotice && it.is_sold ? `<span class="status-pill">Đã bán / Đã giao</span>` : ""}
+              ${pendingBadge}
             </div>`
           : "";
 
@@ -1312,12 +1441,15 @@
           `;
         }
 
-        const actionsHtml = (staff || canManageOwner || canDel)
+        const actionsHtml = (staff || canManageOwner || canDel || canEdit)
           ? `<div class="card-actions">
               ${staff ? `
                 <button type="button" class="btn-amber" onclick="togglePin('${it.id}', ${!isPinned})">
                   ${isPinned ? "Bỏ ghim" : "Ghim bài"}
                 </button>
+              ` : ""}
+              ${canEdit ? `
+                <button type="button" class="btn-info" onclick="openEditModal('${it.id}')">Sửa</button>
               ` : ""}
               ${!isNotice && canManageOwner ? `
                 <button type="button" class="btn-success" onclick="toggleSold('${it.id}', ${!it.is_sold})">
