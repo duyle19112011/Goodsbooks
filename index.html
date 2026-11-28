@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mua bán, cho tặng & trao đổi đồ cũ</title>
+  <title>Trường THPT Phước Vĩnh - Mua bán, cho tặng & trao đổi đồ cũ</title>
   <link rel="icon" type="image/jpeg" href="./logo-phuoc-vinh.jpg" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -30,7 +30,7 @@
     }
     .container { max-width: 1040px; margin: 0 auto; padding: 16px; }
     header {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      display: flex; flex-direction: column; align-items: flex-start;
       gap: 12px; padding: 14px 0 20px; border-bottom: 1px solid var(--border);
     }
     .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 700; }
@@ -38,7 +38,12 @@
       width: 34px; height: 34px; border-radius: 50%;
       object-fit: cover; background: #fff; flex-shrink: 0;
     }
-    .nav-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .nav-actions {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%;
+    }
+    .nav-row {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    }
     .badge-user {
       padding: 6px 10px; border-radius: 999px; background: var(--panel-2);
       border: 1px solid var(--border); font-size: 13px; color: #cbd5e1;
@@ -217,12 +222,16 @@
     <header>
       <div class="brand">
         <img class="brand-logo" src="./logo-phuoc-vinh.jpg" alt="Logo Trường THPT Phước Vĩnh" />
-        <span>Trao Tay</span>
+        <span>Trường THPT Phước Vĩnh</span>
       </div>
       <div class="nav-actions" id="navActions">
-        <button type="button" id="btnOpenCart" class="btn-ghost">🛒 Giỏ hàng (0)</button>
-        <button type="button" id="btnOpenLogin" class="btn-ghost">Đăng nhập</button>
-        <button type="button" id="btnOpenRegister" class="btn-primary">Đăng ký</button>
+        <div class="nav-row">
+          <button type="button" id="btnOpenLogin" class="btn-ghost">Đăng nhập</button>
+          <button type="button" id="btnOpenRegister" class="btn-primary">Đăng ký</button>
+        </div>
+        <div class="nav-row">
+          <button type="button" id="btnOpenCart" class="btn-ghost">🛒 Giỏ hàng (0)</button>
+        </div>
       </div>
     </header>
 
@@ -570,7 +579,6 @@
       return isMainAdmin(profile) || isSubAdmin(profile);
     }
 
-    // Sub_admin không được xóa bài của admin (hoặc sub_admin khác)
     function canDeleteItem(item) {
       if (!currentUser) return false;
       if (isMainAdmin(currentProfile)) return true;
@@ -993,13 +1001,17 @@
     function renderNav() {
       if (!currentUser) {
         navActions.innerHTML = `
-          <button type="button" id="btnOpenCart" class="btn-ghost">🛒 Giỏ hàng (${cartIds.length})</button>
-          <button type="button" id="btnOpenLogin" class="btn-ghost">Đăng nhập</button>
-          <button type="button" id="btnOpenRegister" class="btn-primary">Đăng ký</button>
+          <div class="nav-row">
+            <button type="button" id="btnOpenLogin" class="btn-ghost">Đăng nhập</button>
+            <button type="button" id="btnOpenRegister" class="btn-primary">Đăng ký</button>
+          </div>
+          <div class="nav-row">
+            <button type="button" id="btnOpenCart" class="btn-ghost">🛒 Giỏ hàng (${cartIds.length})</button>
+          </div>
         `;
-        document.getElementById("btnOpenCart").onclick = openCartModal;
         document.getElementById("btnOpenLogin").onclick = () => openAuthModal(false);
         document.getElementById("btnOpenRegister").onclick = () => openAuthModal(true);
+        document.getElementById("btnOpenCart").onclick = openCartModal;
         return;
       }
       const displayName = getCurrentDisplayName();
@@ -1007,15 +1019,21 @@
       const staff = isStaff(currentProfile);
 
       navActions.innerHTML = `
-        <button type="button" id="btnOpenCart" class="btn-ghost">🛒 Giỏ hàng (${cartIds.length})</button>
-        <span class="badge-user">${escapeHtml(displayName)}${roleBadge ? " • " + escapeHtml(roleBadge) : ""}</span>
-        ${staff ? `<button type="button" id="btnOpenNotice" class="btn-amber">+ Đăng thông báo</button>` : ""}
-        <button type="button" id="btnOpenPost" class="btn-primary">+ Đăng tin</button>
-        <button type="button" id="btnLogout" class="btn-ghost">Đăng xuất</button>
+        <div class="nav-row">
+          <span class="badge-user">${escapeHtml(displayName)}${roleBadge ? " • " + escapeHtml(roleBadge) : ""}</span>
+          ${staff ? `<button type="button" id="btnOpenNotice" class="btn-amber">+ Đăng thông báo</button>` : ""}
+        </div>
+        <div class="nav-row">
+          <button type="button" id="btnOpenPost" class="btn-primary">+ Đăng tin</button>
+          <button type="button" id="btnOpenCart" class="btn-ghost">🛒 Giỏ hàng (${cartIds.length})</button>
+        </div>
+        <div class="nav-row">
+          <button type="button" id="btnLogout" class="btn-ghost">Đăng xuất</button>
+        </div>
       `;
-      document.getElementById("btnOpenCart").onclick = openCartModal;
       if (staff) document.getElementById("btnOpenNotice").onclick = openNoticeModal;
       document.getElementById("btnOpenPost").onclick = openPostModal;
+      document.getElementById("btnOpenCart").onclick = openCartModal;
       document.getElementById("btnLogout").onclick = async () => {
         await sb.auth.signOut();
       };
