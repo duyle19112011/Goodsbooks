@@ -199,9 +199,8 @@
 
     <section class="hero">
       <h1>Mua bán, cho tặng và trao đổi đồ cũ.</h1>
-      <p>Đăng món đồ bạn muốn bán, cho đi hoặc đổi — gọn gàng, trực tiếp, không qua trung gian.</p>
+      <p>Đăng món đồ bạn muốn bán, cho hoặc trao đổi</p>
     </section>
-
     <div class="toolbar">
       <input id="searchInput" type="search" placeholder="Tìm theo tên vật phẩm, thông báo, người đăng, địa chỉ..." />
       <select id="filterStatus">
@@ -209,7 +208,7 @@
         <option value="notice">📢 Thông báo</option>
         <option value="gift">🎁 Quà tặng</option>
         <option value="sale">🛒 Mua bán</option>
-        <option value="sold">Đã bán</option>
+        <option value="sold">📦 Đã bán</option>
       </select>
     </div>
 
@@ -237,17 +236,17 @@
       <form id="authForm">
         <div id="registerFields" style="display:none;">
           <div class="field">
-            <label for="regName">Tên hiển thị (không trùng)</label>
+            <label for="regName">Tên hiển thị</label>
             <input id="regName" type="text" placeholder="Ví dụ: DuyLe" />
           </div>
           <div class="field">
-            <label for="regPhone">Số điện thoại (không trùng)</label>
+            <label for="regPhone">Số điện thoại</label>
             <input id="regPhone" type="tel" placeholder="Ví dụ: 0967552130" />
           </div>
         </div>
 
         <div class="field">
-          <label for="authEmail">Email (Gmail)</label>
+          <label for="authEmail">Gamil</label>
           <input id="authEmail" type="email" required placeholder="name@gmail.com" />
         </div>
 
@@ -271,7 +270,7 @@
 
       <div id="forgotBox" class="forgot-box">
         <div class="field" style="margin-bottom:8px;">
-          <label for="fpEmail">Khôi phục mật khẩu qua Gmail</label>
+          <label for="fpEmail">Khôi phục mật khẩu</label>
           <input id="fpEmail" type="email" placeholder="Nhập Gmail đã đăng ký..." />
         </div>
         <button type="button" id="btnSendReset" class="btn-primary" style="width:100%;">Gửi link đặt lại mật khẩu</button>
@@ -296,7 +295,7 @@
         </div>
         <div class="field">
           <label for="pTitle">Tên vật phẩm</label>
-          <input id="pTitle" type="text" required placeholder="Ví dụ: Bản vẽ kĩ thuật" />
+          <input id="pTitle" type="text" required placeholder="Ví dụ: sách giáo khoa tin học 10" />
         </div>
         <div class="field">
           <label for="pCondition">Tình trạng vật phẩm</label>
@@ -304,18 +303,18 @@
         </div>
         <div class="field">
           <label for="pAddress">Địa chỉ</label>
-          <input id="pAddress" type="text" required placeholder="Ví dụ: Phước Hòa, Phú Giáo..." />
+          <input id="pAddress" type="text" required placeholder="Ví dụ: TP.HCM, xã Phú Giáo, THPT Phước Vĩnh" />
         </div>
         <div class="field">
           <label for="pPhone">Số điện thoại</label>
-          <input id="pPhone" type="tel" required placeholder="Ví dụ: 0967552130" />
+          <input id="pPhone" type="tel" required placeholder="Ví dụ: 0912345678" />
         </div>
         <div class="field">
-          <label for="pPrice">Giá bán (VNĐ — nhập 0 nếu tặng)</label>
+          <label for="pPrice">Giá bán (0 VNĐ nếu tặng)</label>
           <input id="pPrice" type="number" min="0" step="1000" value="0" required />
         </div>
         <div class="field">
-          <label for="pImage">Ảnh món đồ (tùy chọn, tự nén JPG)</label>
+          <label for="pImage">Ảnh món đồ</label>
           <input id="pImage" type="file" accept="image/*" />
         </div>
 
@@ -351,7 +350,7 @@
           <textarea id="nContent" rows="4" required placeholder="Nhập nội dung thông báo chi tiết..."></textarea>
         </div>
         <div class="field">
-          <label for="nImage">Ảnh đính kèm (tùy chọn, tự nén JPG)</label>
+          <label for="nImage">Ảnh đính kèm</label>
           <input id="nImage" type="file" accept="image/*" />
         </div>
 
